@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { ChatCircle, PaperPlaneRight } from '@phosphor-icons/react'
+import { useTranslation, type Language } from '@/lib/i18n'
 
 interface Message {
   id: string
@@ -13,7 +14,12 @@ interface Message {
   timestamp: number
 }
 
-export function LiveChat() {
+interface LiveChatProps {
+  language: Language
+}
+
+export function LiveChat({ language }: LiveChatProps) {
+  const t = useTranslation(language)
   const [messages, setMessages] = useKV<Message[]>('chat-messages', [])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
@@ -40,8 +46,12 @@ export function LiveChat() {
     setIsTyping(true)
 
     try {
+      const systemPrompt = language === 'es' 
+        ? 'Eres un asistente de IA útil especializado en marketing. El usuario está trabajando en campañas de marketing y necesita consejos. Mantén las respuestas concisas y accionables. Responde siempre en español.'
+        : 'You are a helpful AI marketing assistant. The user is working on marketing campaigns and needs advice. Keep responses concise and actionable.'
+
       // @ts-expect-error - spark global is provided by runtime
-      const prompt = spark.llmPrompt`You are a helpful AI marketing assistant. The user is working on marketing campaigns and needs advice. Keep responses concise and actionable.
+      const prompt = spark.llmPrompt`${systemPrompt}
 
 User message: ${input}
 
@@ -61,7 +71,7 @@ Provide a helpful, friendly response.`
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'agent',
-        content: 'Sorry, I encountered an error. Please try again.',
+        content: language === 'es' ? 'Lo siento, encontré un error. Por favor, intenta de nuevo.' : 'Sorry, I encountered an error. Please try again.',
         timestamp: Date.now()
       }
       setMessages((current) => [...(current || []), errorMessage])
@@ -82,10 +92,10 @@ Provide a helpful, friendly response.`
       <div className="mb-4">
         <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
           <ChatCircle size={24} weight="fill" className="text-success" />
-          Live Agent Chat
+          {t.chat.title}
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Ask questions and refine your campaigns
+          {t.chat.subtitle}
         </p>
       </div>
 
@@ -94,7 +104,7 @@ Provide a helpful, friendly response.`
           {!messages || messages.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <ChatCircle size={48} className="mx-auto mb-4 opacity-50" />
-              <p className="text-sm">Start a conversation with your AI marketing agent</p>
+              <p className="text-sm">{t.chat.empty}</p>
             </div>
           ) : (
             messages.map((message) => (
@@ -142,7 +152,7 @@ Provide a helpful, friendly response.`
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="Type your message..."
+          placeholder={t.chat.placeholder}
           className="glass-panel-hover flex-1"
           disabled={isTyping}
         />
