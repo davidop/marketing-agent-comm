@@ -17,16 +17,16 @@ interface CampaignBriefProps {
 }
 
 const AVAILABLE_CHANNELS = [
-  { value: 'instagram', label: 'Instagram' },
+  { value: 'email', label: 'Email' },
   { value: 'facebook', label: 'Facebook' },
-  { value: 'twitter', label: 'Twitter' },
-  { value: 'tiktok', label: 'TikTok' },
-  { value: 'linkedin', label: 'LinkedIn' },
-  { value: 'youtube', label: 'YouTube' },
   { value: 'google', label: 'Google' },
-  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'linkedin', label: 'LinkedIn' },
   { value: 'telegram', label: 'Telegram' },
-  { value: 'email', label: 'Email' }
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'twitter', label: 'Twitter' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'youtube', label: 'YouTube' }
 ]
 
 export function CampaignBrief({ onGenerate, isGenerating, language }: CampaignBriefProps) {
