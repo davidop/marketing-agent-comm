@@ -17,7 +17,7 @@ export const translations = {
       budget: 'Budget',
       budgetPlaceholder: 'e.g., €50,000',
       channels: 'Marketing Channels',
-      channelsPlaceholder: 'e.g., Instagram, Google Ads, Email',
+      channelsPlaceholder: 'Select channels...',
       generate: 'Generate Campaign',
       generating: 'Generating...'
     },
@@ -60,7 +60,7 @@ export const translations = {
       budget: 'Presupuesto',
       budgetPlaceholder: 'ej., €50.000',
       channels: 'Canales de Marketing',
-      channelsPlaceholder: 'ej., Instagram, Google Ads, Email',
+      channelsPlaceholder: 'Selecciona canales...',
       generate: 'Generar Campaña',
       generating: 'Generando...'
     },

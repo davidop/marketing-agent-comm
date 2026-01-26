@@ -4,14 +4,24 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Lightning } from '@phosphor-icons/react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Lightning, CaretDown, Check } from '@phosphor-icons/react'
 import { useTranslation, type Language } from '@/lib/i18n'
+import { cn } from '@/lib/utils'
 
 interface CampaignBriefProps {
   onGenerate: (data: any) => void
   isGenerating: boolean
   language: Language
 }
+
+const AVAILABLE_CHANNELS = [
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'google', label: 'Google' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'telegram', label: 'Telegram' }
+]
 
 export function CampaignBrief({ onGenerate, isGenerating, language }: CampaignBriefProps) {
   const t = useTranslation(language)
@@ -23,14 +33,45 @@ export function CampaignBrief({ onGenerate, isGenerating, language }: CampaignBr
     budget: '',
     channels: ''
   })
+  
+  const [selectedChannels, setSelectedChannels] = useState<string[]>([])
+  const [isChannelOpen, setIsChannelOpen] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onGenerate(formData)
+    const channelsText = selectedChannels
+      .map(ch => AVAILABLE_CHANNELS.find(c => c.value === ch)?.label)
+      .filter(Boolean)
+      .join(', ')
+    
+    onGenerate({
+      ...formData,
+      channels: channelsText
+    })
   }
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+  
+  const toggleChannel = (channelValue: string) => {
+    setSelectedChannels(prev => {
+      if (prev.includes(channelValue)) {
+        return prev.filter(ch => ch !== channelValue)
+      } else {
+        return [...prev, channelValue]
+      }
+    })
+  }
+  
+  const getChannelDisplayText = () => {
+    if (selectedChannels.length === 0) {
+      return t.campaignBrief.channelsPlaceholder
+    }
+    return selectedChannels
+      .map(ch => AVAILABLE_CHANNELS.find(c => c.value === ch)?.label)
+      .filter(Boolean)
+      .join(', ')
   }
 
   return (
@@ -107,20 +148,60 @@ export function CampaignBrief({ onGenerate, isGenerating, language }: CampaignBr
           <Label htmlFor="channels" className="text-xs uppercase font-medium tracking-wide">
             {t.campaignBrief.channels}
           </Label>
-          <Input
-            id="channels"
-            value={formData.channels}
-            onChange={(e) => handleChange('channels', e.target.value)}
-            placeholder={t.campaignBrief.channelsPlaceholder}
-            className="glass-panel-hover"
-            required
-          />
+          <Popover open={isChannelOpen} onOpenChange={setIsChannelOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                id="channels"
+                variant="outline"
+                role="combobox"
+                aria-expanded={isChannelOpen}
+                className={cn(
+                  "w-full justify-between font-normal glass-panel-hover",
+                  selectedChannels.length === 0 && "text-muted-foreground"
+                )}
+              >
+                <span className="truncate">{getChannelDisplayText()}</span>
+                <CaretDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 glass-panel" align="start">
+              <div className="p-2 space-y-1">
+                {AVAILABLE_CHANNELS.map((channel) => (
+                  <div
+                    key={channel.value}
+                    className="flex items-center space-x-2 rounded-md px-3 py-2 hover:bg-accent/50 cursor-pointer transition-colors"
+                    onClick={() => toggleChannel(channel.value)}
+                  >
+                    <Checkbox
+                      checked={selectedChannels.includes(channel.value)}
+                      onCheckedChange={() => toggleChannel(channel.value)}
+                      className="pointer-events-none"
+                    />
+                    <label
+                      htmlFor={channel.value}
+                      className="flex-1 text-sm font-medium cursor-pointer pointer-events-none"
+                    >
+                      {channel.label}
+                    </label>
+                    {selectedChannels.includes(channel.value) && (
+                      <Check className="h-4 w-4 text-primary" weight="bold" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+          {selectedChannels.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              {selectedChannels.length} {language === 'es' ? 'canal(es) seleccionado(s)' : 'channel(s) selected'}
+            </p>
+          )}
         </div>
 
         <Button 
           type="submit" 
           className="w-full neon-glow font-semibold uppercase tracking-wide"
-          disabled={isGenerating}
+          disabled={isGenerating || selectedChannels.length === 0}
         >
           {isGenerating ? (
             <>
