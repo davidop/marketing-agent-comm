@@ -22,6 +22,7 @@ const AVAILABLE_CHANNELS = [
   { value: 'twitter', label: 'Twitter' },
   { value: 'tiktok', label: 'TikTok' },
   { value: 'linkedin', label: 'LinkedIn' },
+  { value: 'youtube', label: 'YouTube' },
   { value: 'google', label: 'Google' },
   { value: 'whatsapp', label: 'WhatsApp' },
   { value: 'telegram', label: 'Telegram' },
