@@ -20,6 +20,7 @@ const AVAILABLE_CHANNELS = [
   { value: 'instagram', label: 'Instagram' },
   { value: 'facebook', label: 'Facebook' },
   { value: 'twitter', label: 'Twitter' },
+  { value: 'tiktok', label: 'TikTok' },
   { value: 'linkedin', label: 'LinkedIn' },
   { value: 'google', label: 'Google' },
   { value: 'whatsapp', label: 'WhatsApp' },
