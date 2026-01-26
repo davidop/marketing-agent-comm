@@ -34,7 +34,7 @@ export function CampaignBrief({ onGenerate, isGenerating, language }: CampaignBr
     channels: ''
   })
   
-  const [selectedChannels, setSelectedChannels] = useState<string[]>([])
+  const [selectedChannels, setSelectedChannels] = useState<string[]>(['telegram'])
   const [isChannelOpen, setIsChannelOpen] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
