@@ -27,6 +27,7 @@ const AVAILABLE_CHANNELS = [
   { value: 'twitter', label: 'Twitter' },
   { value: 'whatsapp', label: 'WhatsApp' },
   { value: 'youtube', label: 'YouTube' }
+]
 
 export function CampaignBrief({ onGenerate, isGenerating, language }: CampaignBriefProps) {
   const t = useTranslation(language)
