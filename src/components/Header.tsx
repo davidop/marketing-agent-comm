@@ -20,7 +20,7 @@ export function Header({ theme, onThemeToggle, isConnected, language, onLanguage
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl lg:text-3xl font-bold uppercase tracking-tight text-foreground bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent sparkle-animate">
+            <h1 className="text-2xl lg:text-3xl font-bold uppercase tracking-tight text-foreground bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
               {t.header.title}
             </h1>
           </div>
