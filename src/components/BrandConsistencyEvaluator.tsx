@@ -5,34 +5,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Progress } from '@/components/ui/progress'
-import { CheckCircle, XCircle, Warning, Sparkle } from '@phosphor-icons/react'
+import { Card } from '@/components/ui/card'
+import { CheckCircle, XCircle, Warning, Sparkle, ArrowRight, Check } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import type { Language } from '@/lib/i18n'
 import type { BrandKit } from '@/lib/types'
+import { evaluateBrandConsistency, type BrandConsistencyResult, type SuggestedChange, type RiskSignal } from '@/lib/brandConsistencyChecker'
 
 interface BrandConsistencyEvaluatorProps {
   content: string
   blockName: string
   language: Language
+  onApplyChange?: (original: string, suggested: string) => void
 }
 
-interface ConsistencyResult {
-  score: number
-  issues: Array<{
-    type: 'error' | 'warning' | 'success'
-    category: string
-    message: string
-  }>
-  forbiddenWordsFound: string[]
-  preferredWordsUsed: string[]
-  toneAlignment: number
-  formalityAlignment: number
-  emojiUsage: 'correct' | 'missing' | 'excessive' | 'unnecessary'
-  ctaAlignment: boolean
-  claimsIssues: string[]
-}
-
-export function BrandConsistencyEvaluator({ content, blockName, language }: BrandConsistencyEvaluatorProps) {
+export function BrandConsistencyEvaluator({ content, blockName, language, onApplyChange }: BrandConsistencyEvaluatorProps) {
   const [brandKit] = useKV<BrandKit>('brand-kit-v2', {
     tone: 'profesional',
     formality: 3,
@@ -49,195 +36,20 @@ export function BrandConsistencyEvaluator({ content, blockName, language }: Bran
 
   const [isOpen, setIsOpen] = useState(false)
   const [isEvaluating, setIsEvaluating] = useState(false)
-  const [result, setResult] = useState<ConsistencyResult | null>(null)
+  const [result, setResult] = useState<BrandConsistencyResult | null>(null)
+  const [appliedChanges, setAppliedChanges] = useState<Set<string>>(new Set())
 
   const evaluateConsistency = async () => {
     setIsEvaluating(true)
     
     try {
       const kit = brandKit!
-      const issues: ConsistencyResult['issues'] = []
+      const evaluation = await evaluateBrandConsistency(content, kit, language)
+      setResult(evaluation)
       
-      const contentLower = content.toLowerCase()
-      
-      const forbiddenWordsFound = kit.forbiddenWords.filter(word => 
-        contentLower.includes(word.toLowerCase())
-      )
-      
-      const preferredWordsUsed = kit.preferredWords.filter(word =>
-        contentLower.includes(word.toLowerCase())
-      )
-      
-      const emojiCount = (content.match(/[\u{1F300}-\u{1F9FF}]/gu) || []).length
-      let emojiUsage: ConsistencyResult['emojiUsage'] = 'correct'
-      
-      if (kit.useEmojis) {
-        if (emojiCount === 0) {
-          emojiUsage = 'missing'
-          issues.push({
-            type: 'warning',
-            category: language === 'es' ? 'Emojis' : 'Emojis',
-            message: language === 'es' 
-              ? 'Tu brand kit requiere emojis pero no se encontraron en el contenido'
-              : 'Your brand kit requires emojis but none were found in the content'
-          })
-        } else {
-          const wordCount = content.split(/\s+/).length
-          const emojiRatio = emojiCount / wordCount
-          
-          if (kit.emojiStyle === 'pocos' && emojiRatio > 0.05) {
-            emojiUsage = 'excessive'
-            issues.push({
-              type: 'warning',
-              category: language === 'es' ? 'Emojis' : 'Emojis',
-              message: language === 'es' 
-                ? `Demasiados emojis (${emojiCount}) para el estilo "pocos"`
-                : `Too many emojis (${emojiCount}) for "few" style`
-            })
-          } else if (kit.emojiStyle === 'moderados' && (emojiRatio < 0.02 || emojiRatio > 0.08)) {
-            emojiUsage = emojiRatio < 0.02 ? 'missing' : 'excessive'
-            issues.push({
-              type: 'warning',
-              category: language === 'es' ? 'Emojis' : 'Emojis',
-              message: language === 'es' 
-                ? `Cantidad de emojis no equilibrada para el estilo "moderados"`
-                : `Emoji count not balanced for "moderate" style`
-            })
-          }
-        }
-      } else if (emojiCount > 0) {
-        emojiUsage = 'unnecessary'
-        issues.push({
-          type: 'warning',
-          category: language === 'es' ? 'Emojis' : 'Emojis',
-          message: language === 'es' 
-            ? 'Tu brand kit no permite emojis pero se encontraron en el contenido'
-            : 'Your brand kit does not allow emojis but they were found in the content'
-        })
-      }
-      
-      forbiddenWordsFound.forEach(word => {
-        issues.push({
-          type: 'error',
-          category: language === 'es' ? 'Palabra Prohibida' : 'Forbidden Word',
-          message: language === 'es' 
-            ? `Se encontró la palabra prohibida: "${word}"`
-            : `Forbidden word found: "${word}"`
-        })
-      })
-      
-      const claimsIssues: string[] = []
-      kit.notAllowedClaims.forEach(claim => {
-        const claimWords = claim.toLowerCase().split(/\s+/).slice(0, 5)
-        const matchCount = claimWords.filter(word => contentLower.includes(word)).length
-        if (matchCount >= 3) {
-          claimsIssues.push(claim)
-          issues.push({
-            type: 'error',
-            category: language === 'es' ? 'Claim No Permitido' : 'Not Allowed Claim',
-            message: language === 'es' 
-              ? `Posible claim no permitido detectado: "${claim.substring(0, 50)}..."`
-              : `Possible not allowed claim detected: "${claim.substring(0, 50)}..."`
-          })
-        }
-      })
-      
-      if (preferredWordsUsed.length > 0) {
-        issues.push({
-          type: 'success',
-          category: language === 'es' ? 'Palabras Preferidas' : 'Preferred Words',
-          message: language === 'es' 
-            ? `Excelente uso de palabras preferidas: ${preferredWordsUsed.slice(0, 3).join(', ')}`
-            : `Great use of preferred words: ${preferredWordsUsed.slice(0, 3).join(', ')}`
-        })
-      }
-
-      const emojiInfo = kit.useEmojis ? `Sí (${kit.emojiStyle})` : 'No'
-      const examplesYes = kit.brandExamplesYes.length > 0 
-        ? `EJEMPLOS DE COPY QUE SÍ REPRESENTA LA MARCA:\n${kit.brandExamplesYes.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}`
-        : ''
-      const examplesNo = kit.brandExamplesNo.length > 0
-        ? `EJEMPLOS DE COPY QUE NO REPRESENTA LA MARCA:\n${kit.brandExamplesNo.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}`
-        : ''
-      
-      // @ts-expect-error - spark global is provided by runtime
-      const prompt = spark.llmPrompt`Eres un experto en análisis de brand voice y consistency. Analiza el siguiente contenido y evalúalo contra las directrices de marca.
-
-BRAND KIT:
-- Tono: ${kit.tone}
-- Nivel de Formalidad: ${kit.formality}/5
-- Emojis: ${emojiInfo}
-- CTA Preferido: ${kit.preferredCTA}
-
-${examplesYes}
-
-${examplesNo}
-
-CONTENIDO A EVALUAR:
-"""
-${content}
-"""
-
-Proporciona tu análisis en el siguiente formato JSON:
-{
-  "toneAlignment": (número 0-100, qué tan bien el contenido se alinea con el tono "${kit.tone}"),
-  "formalityAlignment": (número 0-100, qué tan bien se alinea con el nivel de formalidad ${kit.formality}/5),
-  "overallAnalysis": "(2-3 oraciones resumiendo la consistencia general)",
-  "strengths": ["fortaleza 1", "fortaleza 2"],
-  "improvements": ["mejora sugerida 1", "mejora sugerida 2"]
-}`
-
-      const llmResponse = await spark.llm(prompt, 'gpt-4o', true)
-      const analysis = JSON.parse(llmResponse)
-      
-      if (analysis.strengths && Array.isArray(analysis.strengths)) {
-        analysis.strengths.forEach((strength: string) => {
-          issues.push({
-            type: 'success',
-            category: language === 'es' ? 'Fortaleza' : 'Strength',
-            message: strength
-          })
-        })
-      }
-      
-      if (analysis.improvements && Array.isArray(analysis.improvements)) {
-        analysis.improvements.forEach((improvement: string) => {
-          issues.push({
-            type: 'warning',
-            category: language === 'es' ? 'Mejora' : 'Improvement',
-            message: improvement
-          })
-        })
-      }
-      
-      const toneAlignment = analysis.toneAlignment || 50
-      const formalityAlignment = analysis.formalityAlignment || 50
-      
-      const errorCount = issues.filter(i => i.type === 'error').length
-      const warningCount = issues.filter(i => i.type === 'warning').length
-      
-      let baseScore = (toneAlignment + formalityAlignment) / 2
-      baseScore -= (errorCount * 15)
-      baseScore -= (warningCount * 5)
-      baseScore = Math.max(0, Math.min(100, baseScore))
-      
-      const finalResult: ConsistencyResult = {
-        score: Math.round(baseScore),
-        issues,
-        forbiddenWordsFound,
-        preferredWordsUsed,
-        toneAlignment,
-        formalityAlignment,
-        emojiUsage,
-        ctaAlignment: true,
-        claimsIssues
-      }
-      
-      setResult(finalResult)
-      
-      if (finalResult.score >= 80) {
+      if (evaluation.score >= 80) {
         toast.success(language === 'es' ? '✅ Excelente consistencia de marca' : '✅ Excellent brand consistency')
-      } else if (finalResult.score >= 60) {
+      } else if (evaluation.score >= 60) {
         toast.info(language === 'es' ? '⚠️ Buena consistencia con mejoras menores' : '⚠️ Good consistency with minor improvements')
       } else {
         toast.error(language === 'es' ? '❌ Requiere mejoras de consistencia' : '❌ Requires consistency improvements')
@@ -258,6 +70,17 @@ Proporciona tu análisis en el siguiente formato JSON:
     }
   }
 
+  const handleApplyChange = (change: SuggestedChange) => {
+    if (onApplyChange) {
+      onApplyChange(change.original, change.suggested)
+      setAppliedChanges(prev => new Set([...prev, change.id]))
+      toast.success(language === 'es' ? '✅ Cambio aplicado' : '✅ Change applied')
+    } else {
+      navigator.clipboard.writeText(change.suggested)
+      toast.success(language === 'es' ? '📋 Texto copiado al portapapeles' : '📋 Text copied to clipboard')
+    }
+  }
+
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-primary'
     if (score >= 60) return 'text-accent'
@@ -270,6 +93,44 @@ Proporciona tu análisis en el siguiente formato JSON:
     return 'destructive'
   }
 
+  const getSeverityColor = (severity: RiskSignal['severity']) => {
+    switch (severity) {
+      case 'alto': return 'border-destructive/60 bg-destructive/10'
+      case 'medio': return 'border-accent/60 bg-accent/10'
+      case 'bajo': return 'border-muted/60 bg-muted/10'
+    }
+  }
+
+  const getSeverityIcon = (severity: RiskSignal['severity']) => {
+    switch (severity) {
+      case 'alto': return <XCircle size={20} weight="fill" className="text-destructive" />
+      case 'medio': return <Warning size={20} weight="fill" className="text-accent" />
+      case 'bajo': return <Warning size={20} weight="duotone" className="text-muted-foreground" />
+    }
+  }
+
+  const getRiskTypeLabel = (type: RiskSignal['type'], lang: Language) => {
+    const labels = {
+      'claim-dudoso': lang === 'es' ? 'Claim Dudoso' : 'Dubious Claim',
+      'tono-incoherente': lang === 'es' ? 'Tono Incoherente' : 'Incoherent Tone',
+      'exceso-hype': lang === 'es' ? 'Exceso de Hype' : 'Excessive Hype',
+      'promesa-sin-prueba': lang === 'es' ? 'Promesa sin Prueba' : 'Promise without Proof',
+      'palabra-prohibida': lang === 'es' ? 'Palabra Prohibida' : 'Forbidden Word'
+    }
+    return labels[type]
+  }
+
+  const getChangeTypeLabel = (type: SuggestedChange['type'], lang: Language) => {
+    const labels = {
+      'tone': lang === 'es' ? 'Tono' : 'Tone',
+      'word': lang === 'es' ? 'Palabra' : 'Word',
+      'claim': lang === 'es' ? 'Claim' : 'Claim',
+      'cta': lang === 'es' ? 'CTA' : 'CTA',
+      'emoji': lang === 'es' ? 'Emoji' : 'Emoji'
+    }
+    return labels[type]
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
@@ -278,7 +139,7 @@ Proporciona tu análisis en el siguiente formato JSON:
           {language === 'es' ? 'Evaluar Consistencia' : 'Evaluate Consistency'}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] glass-panel border-2">
+      <DialogContent className="max-w-4xl max-h-[90vh] glass-panel border-2">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             <Sparkle size={24} weight="fill" className="text-primary" />
@@ -299,133 +160,160 @@ Proporciona tu análisis en el siguiente formato JSON:
             </p>
           </div>
         ) : result ? (
-          <ScrollArea className="max-h-[60vh]">
+          <ScrollArea className="max-h-[70vh]">
             <div className="space-y-6 pr-4">
               
               {/* Overall Score */}
-              <div className="glass-panel p-6 rounded-2xl border-2 text-center space-y-4">
+              <Card className="glass-panel p-6 rounded-2xl border-2 text-center space-y-4">
                 <div className="flex items-center justify-center gap-3">
-                  <span className="text-sm font-bold text-muted-foreground">
-                    {language === 'es' ? 'Puntuación Total' : 'Overall Score'}
+                  <span className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
+                    {language === 'es' ? 'Puntuación de Consistencia' : 'Consistency Score'}
                   </span>
                   <Badge variant={getScoreBadgeVariant(result.score)} className="text-2xl font-bold px-4 py-2">
                     {result.score}/100
                   </Badge>
                 </div>
                 <Progress value={result.score} className="h-3" />
-              </div>
+                <p className="text-xs text-muted-foreground">
+                  {result.score >= 80 && (language === 'es' ? 'Excelente alineación con tu Brand Kit' : 'Excellent alignment with your Brand Kit')}
+                  {result.score >= 60 && result.score < 80 && (language === 'es' ? 'Buena alineación con margen de mejora' : 'Good alignment with room for improvement')}
+                  {result.score < 60 && (language === 'es' ? 'Requiere ajustes para alinearse con tu marca' : 'Requires adjustments to align with your brand')}
+                </p>
+              </Card>
 
-              {/* Alignment Metrics */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="glass-panel p-4 rounded-xl border-2 space-y-2">
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    {language === 'es' ? 'Alineación de Tono' : 'Tone Alignment'}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Progress value={result.toneAlignment} className="h-2" />
-                    <span className={`text-lg font-bold ${getScoreColor(result.toneAlignment)}`}>
-                      {result.toneAlignment}%
-                    </span>
-                  </div>
-                </div>
-                <div className="glass-panel p-4 rounded-xl border-2 space-y-2">
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    {language === 'es' ? 'Alineación de Formalidad' : 'Formality Alignment'}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Progress value={result.formalityAlignment} className="h-2" />
-                    <span className={`text-lg font-bold ${getScoreColor(result.formalityAlignment)}`}>
-                      {result.formalityAlignment}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Stats */}
-              <div className="grid grid-cols-3 gap-3">
-                {result.forbiddenWordsFound.length > 0 && (
-                  <div className="glass-panel p-3 rounded-xl border-2 border-destructive/40 text-center">
-                    <p className="text-2xl font-bold text-destructive">{result.forbiddenWordsFound.length}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {language === 'es' ? 'Palabras prohibidas' : 'Forbidden words'}
-                    </p>
-                  </div>
-                )}
-                {result.preferredWordsUsed.length > 0 && (
-                  <div className="glass-panel p-3 rounded-xl border-2 border-primary/40 text-center">
-                    <p className="text-2xl font-bold text-primary">{result.preferredWordsUsed.length}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {language === 'es' ? 'Palabras preferidas' : 'Preferred words'}
-                    </p>
-                  </div>
-                )}
-                <div className="glass-panel p-3 rounded-xl border-2 text-center">
-                  <p className="text-2xl font-bold">
-                    {result.emojiUsage === 'correct' ? '✅' : result.emojiUsage === 'missing' ? '⚠️' : '❌'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {language === 'es' ? 'Uso de emojis' : 'Emoji usage'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Issues List */}
-              <div className="space-y-3">
-                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
-                  {language === 'es' ? 'Detalles del Análisis' : 'Analysis Details'}
-                </h3>
-                <div className="space-y-2">
-                  {result.issues.map((issue, idx) => (
-                    <div 
-                      key={idx}
-                      className={`glass-panel p-3 rounded-xl border-2 flex items-start gap-3 ${
-                        issue.type === 'error' ? 'border-destructive/40 bg-destructive/5' :
-                        issue.type === 'warning' ? 'border-accent/40 bg-accent/5' :
-                        'border-primary/40 bg-primary/5'
-                      }`}
-                    >
-                      {issue.type === 'error' && <XCircle size={20} weight="fill" className="text-destructive shrink-0 mt-0.5" />}
-                      {issue.type === 'warning' && <Warning size={20} weight="fill" className="text-accent shrink-0 mt-0.5" />}
-                      {issue.type === 'success' && <CheckCircle size={20} weight="fill" className="text-primary shrink-0 mt-0.5" />}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-muted-foreground">{issue.category}</p>
-                        <p className="text-sm mt-1">{issue.message}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Forbidden Words Found */}
-              {result.forbiddenWordsFound.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-bold text-destructive">
-                    {language === 'es' ? '🚫 Palabras Prohibidas Detectadas' : '🚫 Forbidden Words Detected'}
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {result.forbiddenWordsFound.map((word, idx) => (
-                      <Badge key={idx} variant="destructive" className="rounded-lg">
-                        {word}
-                      </Badge>
+              {/* Suggested Changes */}
+              {result.suggestedChanges.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                    <ArrowRight size={18} weight="bold" />
+                    {language === 'es' ? 'Cambios Sugeridos' : 'Suggested Changes'}
+                    <Badge variant="secondary" className="ml-auto">
+                      {result.suggestedChanges.length}
+                    </Badge>
+                  </h3>
+                  <div className="space-y-3">
+                    {result.suggestedChanges.map((change) => (
+                      <Card 
+                        key={change.id}
+                        className="glass-panel p-4 rounded-xl border-2 border-primary/30 space-y-3"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">
+                              {getChangeTypeLabel(change.type, language)}
+                            </Badge>
+                            <h4 className="text-sm font-semibold">{change.description}</h4>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant={appliedChanges.has(change.id) ? "secondary" : "default"}
+                            className="rounded-lg shrink-0"
+                            onClick={() => handleApplyChange(change)}
+                            disabled={appliedChanges.has(change.id)}
+                          >
+                            {appliedChanges.has(change.id) ? (
+                              <>
+                                <Check size={14} weight="bold" />
+                                {language === 'es' ? 'Aplicado' : 'Applied'}
+                              </>
+                            ) : (
+                              language === 'es' ? 'Aplicar' : 'Apply'
+                            )}
+                          </Button>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 gap-3">
+                          <div className="space-y-1">
+                            <p className="text-xs font-bold text-destructive uppercase tracking-wider">
+                              {language === 'es' ? '❌ Original' : '❌ Original'}
+                            </p>
+                            <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3">
+                              <p className="text-sm font-mono">{change.original}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <p className="text-xs font-bold text-primary uppercase tracking-wider">
+                              {language === 'es' ? '✅ Sugerido' : '✅ Suggested'}
+                            </p>
+                            <div className="bg-primary/10 border border-primary/30 rounded-lg p-3">
+                              <p className="text-sm font-mono">{change.suggested}</p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="pt-2 border-t border-border">
+                          <p className="text-xs text-muted-foreground">
+                            <span className="font-semibold">{language === 'es' ? 'Por qué:' : 'Why:'}</span> {change.reason}
+                          </p>
+                        </div>
+                      </Card>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Preferred Words Used */}
-              {result.preferredWordsUsed.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-bold text-primary">
-                    {language === 'es' ? '⭐ Palabras Preferidas Usadas' : '⭐ Preferred Words Used'}
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {result.preferredWordsUsed.map((word, idx) => (
-                      <Badge key={idx} variant="outline" className="rounded-lg border-primary text-primary">
-                        {word}
-                      </Badge>
+              {/* Risk Signals */}
+              {result.riskSignals.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                    <Warning size={18} weight="bold" />
+                    {language === 'es' ? 'Señales de Riesgo' : 'Risk Signals'}
+                    <Badge variant="destructive" className="ml-auto">
+                      {result.riskSignals.filter(r => r.severity === 'alto').length} {language === 'es' ? 'Alto' : 'High'}
+                    </Badge>
+                  </h3>
+                  <div className="space-y-2">
+                    {result.riskSignals.map((risk, idx) => (
+                      <Card 
+                        key={idx}
+                        className={`glass-panel p-4 rounded-xl border-2 ${getSeverityColor(risk.severity)}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          {getSeverityIcon(risk.severity)}
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">
+                                {getRiskTypeLabel(risk.type, language)}
+                              </Badge>
+                              <Badge 
+                                variant={risk.severity === 'alto' ? 'destructive' : risk.severity === 'medio' ? 'secondary' : 'outline'}
+                                className="text-xs"
+                              >
+                                {risk.severity === 'alto' && (language === 'es' ? 'Riesgo Alto' : 'High Risk')}
+                                {risk.severity === 'medio' && (language === 'es' ? 'Riesgo Medio' : 'Medium Risk')}
+                                {risk.severity === 'bajo' && (language === 'es' ? 'Riesgo Bajo' : 'Low Risk')}
+                              </Badge>
+                            </div>
+                            <p className="text-sm">{risk.description}</p>
+                            {risk.location && (
+                              <div className="bg-muted/50 rounded-lg p-2 mt-2">
+                                <p className="text-xs font-mono text-muted-foreground">
+                                  {language === 'es' ? '📍 Ubicación: ' : '📍 Location: '}{risk.location}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </Card>
                     ))}
                   </div>
                 </div>
+              )}
+
+              {/* No Issues */}
+              {result.suggestedChanges.length === 0 && result.riskSignals.length === 0 && (
+                <Card className="glass-panel p-8 rounded-2xl border-2 border-primary/40 text-center">
+                  <CheckCircle size={48} weight="fill" className="text-primary mx-auto mb-4" />
+                  <h3 className="text-lg font-bold mb-2">
+                    {language === 'es' ? '¡Perfecto!' : 'Perfect!'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {language === 'es' 
+                      ? 'Este contenido está perfectamente alineado con tu Brand Kit. No se detectaron inconsistencias.' 
+                      : 'This content is perfectly aligned with your Brand Kit. No inconsistencies detected.'}
+                  </p>
+                </Card>
               )}
 
             </div>
