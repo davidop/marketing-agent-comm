@@ -13,6 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Lightning, CaretDown, Check, CheckCircle, ArrowRight, ArrowLeft, Info, Sparkle } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
+import { BriefScoreCard } from '@/components/BriefScoreCard'
 import type { CampaignBriefData } from '@/lib/types'
 
 interface BriefWizardProps {
@@ -68,7 +69,6 @@ const DEMO_DATA: CampaignBriefData = {
 
 export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardProps) {
   const [currentStep, setCurrentStep] = useState(0)
-  const [briefScore, setBriefScore] = useState(0)
   const [isChannelOpen, setIsChannelOpen] = useState(false)
   
   const [formData, setFormData] = useKV<CampaignBriefData>('campaign-brief-data', {
@@ -106,31 +106,6 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
   const steps = language === 'es' 
     ? ['Objetivo', 'Audiencia', 'Oferta', 'Canales', 'Restricciones']
     : ['Objective', 'Audience', 'Offer', 'Channels', 'Restrictions']
-
-  useEffect(() => {
-    calculateScore()
-  }, [formData])
-
-  const calculateScore = () => {
-    if (!formData) return
-    let score = 0
-    const checks = [
-      formData.objective,
-      formData.kpi,
-      formData.segments,
-      formData.pains,
-      formData.product,
-      formData.usp,
-      formData.channels.length > 0,
-      formData.budget,
-      formData.timing,
-      formData.tone
-    ]
-    
-    const filledFields = checks.filter(Boolean).length
-    score = Math.round((filledFields / checks.length) * 100)
-    setBriefScore(score)
-  }
 
   const handleChange = (field: keyof CampaignBriefData, value: any) => {
     setFormData((current) => {
@@ -221,19 +196,6 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
       .map(ch => AVAILABLE_CHANNELS.find(c => c.value === ch)?.label)
       .filter(Boolean)
       .join(', ')
-  }
-
-  const getScoreColor = () => {
-    if (briefScore >= 80) return 'text-success'
-    if (briefScore >= 60) return 'text-accent'
-    return 'text-destructive'
-  }
-
-  const getScoreBadge = () => {
-    if (briefScore >= 80) return language === 'es' ? 'Excelente' : 'Excellent'
-    if (briefScore >= 60) return language === 'es' ? 'Bueno' : 'Good'
-    if (briefScore >= 40) return language === 'es' ? 'Regular' : 'Fair'
-    return language === 'es' ? 'Incompleto' : 'Incomplete'
   }
 
   const canProceed = () => {
@@ -819,29 +781,31 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
   }
 
   return (
-    <Card className="glass-panel p-6 border-2 marketing-shine">
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-            <Lightning size={28} weight="fill" className="text-primary float-animate" />
-            <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-              {language === 'es' ? 'Brief de Campaña' : 'Campaign Brief'}
-            </span>
-          </h2>
-          
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="rounded-full px-3 py-1 font-bold">
-              {language === 'es' ? 'Score' : 'Score'}: <span className={cn("ml-1", getScoreColor())}>{briefScore}/100</span>
-            </Badge>
-            <Badge className={cn("rounded-full px-3 py-1", briefScore >= 80 ? "bg-success" : briefScore >= 60 ? "bg-accent" : "bg-destructive")}>
-              {getScoreBadge()}
-            </Badge>
+    <div className="space-y-4">
+      <BriefScoreCard formData={formData || {} as CampaignBriefData} language={language} />
+      
+      <Card className="glass-panel p-6 border-2 marketing-shine">
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+              <Lightning size={28} weight="fill" className="text-primary float-animate" />
+              <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                {language === 'es' ? 'Brief de Campaña' : 'Campaign Brief'}
+              </span>
+            </h2>
+            
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={loadDemoData}
+              className="rounded-xl border-2 gap-2"
+            >
+              <Sparkle size={16} weight="fill" />
+              {language === 'es' ? 'Demo' : 'Demo'}
+            </Button>
           </div>
-        </div>
 
-        <Progress value={briefScore} className="h-2 mb-4" />
-
-        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2 flex-wrap">
             {steps.map((step, idx) => (
               <div key={idx} className="flex items-center gap-2">
@@ -857,65 +821,54 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
               </div>
             ))}
           </div>
-          
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={loadDemoData}
-            className="rounded-xl border-2 gap-2"
-          >
-            <Sparkle size={16} weight="fill" />
-            {language === 'es' ? 'Demo' : 'Demo'}
-          </Button>
         </div>
-      </div>
 
-      <div className="space-y-6">
-        {renderStepContent()}
+        <div className="space-y-6">
+          {renderStepContent()}
 
-        <div className="flex gap-3 pt-4">
-          {currentStep > 0 && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setCurrentStep(prev => prev - 1)}
-              className="flex-1 rounded-xl border-2"
-            >
-              <ArrowLeft size={18} weight="bold" />
-              {language === 'es' ? 'Anterior' : 'Previous'}
-            </Button>
-          )}
-          
-          {currentStep < steps.length - 1 ? (
-            <Button
-              type="button"
-              onClick={() => setCurrentStep(prev => prev + 1)}
-              disabled={!canProceed()}
-              className="flex-1 rounded-xl border-2"
-            >
-              {language === 'es' ? 'Siguiente' : 'Next'}
-              <ArrowRight size={18} weight="bold" />
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isGenerating || !canProceed()}
-              className="flex-1 neon-glow-accent font-bold uppercase tracking-wider rounded-xl py-6 border-2 border-accent/50"
-            >
-              {isGenerating ? (
-                <span className="animate-pulse">{language === 'es' ? 'Generando...' : 'Generating...'}</span>
-              ) : (
-                <>
-                  <Lightning size={20} weight="fill" className="sparkle-animate" />
-                  {language === 'es' ? 'Generar Campaña' : 'Generate Campaign'}
-                </>
-              )}
-            </Button>
-          )}
+          <div className="flex gap-3 pt-4">
+            {currentStep > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCurrentStep(prev => prev - 1)}
+                className="flex-1 rounded-xl border-2"
+              >
+                <ArrowLeft size={18} weight="bold" />
+                {language === 'es' ? 'Anterior' : 'Previous'}
+              </Button>
+            )}
+            
+            {currentStep < steps.length - 1 ? (
+              <Button
+                type="button"
+                onClick={() => setCurrentStep(prev => prev + 1)}
+                disabled={!canProceed()}
+                className="flex-1 rounded-xl border-2"
+              >
+                {language === 'es' ? 'Siguiente' : 'Next'}
+                <ArrowRight size={18} weight="bold" />
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isGenerating || !canProceed()}
+                className="flex-1 neon-glow-accent font-bold uppercase tracking-wider rounded-xl py-6 border-2 border-accent/50"
+              >
+                {isGenerating ? (
+                  <span className="animate-pulse">{language === 'es' ? 'Generando...' : 'Generating...'}</span>
+                ) : (
+                  <>
+                    <Lightning size={20} weight="fill" className="sparkle-animate" />
+                    {language === 'es' ? 'Generar Campaña' : 'Generate Campaign'}
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+    </div>
   )
 }
