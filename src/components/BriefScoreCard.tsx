@@ -2,18 +2,18 @@ import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { cn } from '@/lib/utils'
-import { CheckCircle, XCircle, Warning, Lightbulb } from '@phosphor-icons/react'
 import type { CampaignBriefData } from '@/lib/types'
-
 interface BriefScoreCardProps {
-  formData: CampaignBriefData
-  language: 'en' | 'es'
+
+
+  label: string
+  met: boolean
 }
 
-interface ScoreItem {
-  label: string
-  value: number
-  met: boolean
+
+    {
+      value: 15
+      recommen
   recommendation: string
 }
 
@@ -21,7 +21,7 @@ export function BriefScoreCard({ formData, language }: BriefScoreCardProps) {
   const t = (es: string, en: string) => language === 'es' ? es : en
 
   const scoreItems: ScoreItem[] = [
-    {
+     
       label: t('Objetivo + KPI', 'Objective + KPI'),
       value: 15,
       met: Boolean(formData.objective && formData.kpi),
@@ -31,76 +31,76 @@ export function BriefScoreCard({ formData, language }: BriefScoreCardProps) {
       )
     },
     {
-      label: t('Segmento de audiencia', 'Audience segment'),
-      value: 15,
-      met: Boolean(formData.segments || formData.audience),
-      recommendation: t(
-        'Describe el segmento de audiencia con cargo, tamaño de empresa, industria, nivel de decisión.',
-        'Describe the audience segment with job title, company size, industry, decision level.'
-      )
+        'Identify current pains of your audience and common 
     },
-    {
-      label: t('Dolores + objeciones', 'Pains + objections'),
-      value: 15,
-      met: Boolean(formData.pains && formData.objections),
-      recommendation: t(
-        'Identifica los dolores actuales de tu audiencia y las objeciones comunes que tienen al comprar.',
-        'Identify current pains of your audience and common objections they have when buying.'
-      )
-    },
-    {
       label: t('Producto + promesa', 'Product + promise'),
-      value: 15,
-      met: Boolean(formData.product && (formData.mainPromise || formData.usp)),
-      recommendation: t(
+      met: Boolean(formD
         'Describe el producto y la promesa central que ofreces (el valor principal).',
-        'Describe the product and the core promise you offer (the main value).'
       )
-    },
     {
-      label: t('USP / Ventaja diferencial', 'USP / Unique advantage'),
-      value: 10,
-      met: Boolean(formData.usp),
-      recommendation: t(
-        'Define qué hace única tu oferta. ¿Por qué elegirte vs competidores? Sé específico.',
-        'Define what makes your offer unique. Why choose you vs competitors? Be specific.'
-      )
+      
+     
+        'Define what makes your offer unique. Why choose you 
     },
-    {
-      label: t('Prueba social / Evidencia', 'Social proof / Evidence'),
-      value: 10,
-      met: Boolean(formData.allowedClaims || formData.availableAssets),
-      recommendation: t(
-        'Añade claims verificables (ej. "reduce costos 30%"), casos de éxito, testimonios o certificaciones.',
-        'Add verifiable claims (e.g., "reduces costs 30%"), case studies, testimonials or certifications.'
+      label: t('Prueba social / Evidencia', 'Social proof 
+      met: Boolean(formD
+        'Añade claims verificables (ej. "reduce costos 30%"), casos de éxito, testimonios o certificacione
       )
+    {
+      
+     
+        'Select marketing channels and assign a total budg
     },
-    {
-      label: t('Canales + presupuesto', 'Channels + budget'),
-      value: 10,
-      met: Boolean(formData.channels.length > 0 && formData.budget),
-      recommendation: t(
-        'Selecciona los canales de marketing y asigna un presupuesto total con duración.',
-        'Select marketing channels and assign a total budget with duration.'
+      label: t('Restricciones de marca / legales', 'Brand / legal restrictions'
+      met: Boolean(formD
+        'Define el tono de comunicación, palabras prohibidas y requisitos legales (GDP
       )
-    },
     {
-      label: t('Restricciones de marca / legales', 'Brand / legal restrictions'),
-      value: 10,
-      met: Boolean(formData.tone || formData.legalRequirements || formData.forbiddenWords),
-      recommendation: t(
-        'Define el tono de comunicación, palabras prohibidas y requisitos legales (GDPR, términos, etc.).',
-        'Define communication tone, forbidden words and legal requirements (GDPR, terms, etc.).'
-      )
-    },
-    {
-      label: t('Timing / Geografía', 'Timing / Geography'),
-      value: 5,
-      met: Boolean(formData.timing || formData.geography),
-      recommendation: t(
-        'Especifica fechas de inicio/fin y geografía objetivo con idiomas relevantes.',
-        'Specify start/end dates and target geography with relevant languages.'
-      )
+      
+     
+        'Specify start/end dates and target geography with relevant la
+    }
+
+  const missingItems = s
+
+    if (totalScore >= 80) return {
+      c
+      
+     
+    if (totalScore >= 50) return {
+      color: 'te
+      borderColor: 'border-accent',
+      variant: 'warning'
+    return {
+      color: 'text-destructive',
+      b
+      
+  }
+  const status = getScoreStatus()
+
+    <Card className="glass-panel border-2 p-5">
+        <div>
+            <StatusIcon size={16} weight="fill" />
+          </h3>
+       
+      
+     
+
+
+          <StatusIcon size={16} weight="fill" className={status.color} />
+            <span classN
+              <span className="block text-xs mt-1 text-muted-foreground">
+                  `El resultado será más genérico por falta de datos. Completa ${100 - totalScor
+       
+      
+     
+        {missingItems.length > 0 && (
+            <di
+              <h4 className="text-xs font-bold uppercase t
+              </h4>
+            <ul className="space-y-2">
+                <li key={idx} className="flex items-start gap-2 text-xs">
+       
     }
   ]
 
@@ -227,27 +227,27 @@ export function BriefScoreCard({ formData, language }: BriefScoreCardProps) {
                 {t('Cómo mejorarlo', 'How to improve')}
               </h4>
             </div>
-            <ul className="space-y-3">
-              {missingItems.slice(0, 3).map((item, idx) => (
-                <li key={idx} className="text-xs space-y-1">
-                  <div className="font-bold text-primary">{item.label}</div>
-                  <div className="text-muted-foreground leading-relaxed pl-3 border-l-2 border-accent/30">
-                    {item.recommendation}
+
+
+
+
+
+
                   </div>
-                </li>
+
               ))}
-            </ul>
-            {missingItems.length > 3 && (
-              <p className="text-xs text-muted-foreground italic">
+
+
+
                 {t(
-                  `+ ${missingItems.length - 3} recomendaciones más...`,
-                  `+ ${missingItems.length - 3} more recommendations...`
-                )}
-              </p>
-            )}
+
+
+
+
+
           </div>
-        )}
+
       </div>
-    </Card>
+
   )
-}
+
