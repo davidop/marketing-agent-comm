@@ -1,34 +1,54 @@
 import { useState } from 'react'
 import { useKV } from '@github/spark/hooks'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/texta
-import { Badge } from '@/components/ui/badg
-import { Palette, Plus, X, Check } from '@phosp
+import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Palette, Plus, X, Check } from 'lucide-react'
+import { toast } from 'sonner'
 import type { Language } from '@/lib/i18n'
+import type { BrandKit } from '@/lib/types'
+
 interface BrandKitEditorProps {
+  language: Language
 }
-export function BrandKitEditor({ language }: 
+
+export function BrandKitEditor({ language }: BrandKitEditorProps) {
+  const defaultBrandKit: BrandKit = {
     voice: '',
+    tone: '',
     doList: [],
+    dontList: [],
     forbiddenWords: [],
+    allowedClaims: [],
     useEmojis: false,
+    formality: 'professional',
+    examples: []
+  }
 
+  const [brandKit, setBrandKit] = useKV<BrandKit>('brand-kit', defaultBrandKit)
+  const [doInput, setDoInput] = useState('')
+  const [dontInput, setDontInput] = useState('')
+  const [forbiddenInput, setForbiddenInput] = useState('')
+  const [claimInput, setClaimInput] = useState('')
+  const [exampleInput, setExampleInput] = useState('')
 
-  const [dontInput, 
- 
-
-    voice: '',
-    doList: [],
-    forbiddenW
-    useEmojis
-    examples: [
-
-    setBrandKit((curren
+  const handleUpdate = (field: keyof BrandKit, value: any) => {
+    setBrandKit((current) => {
+      const base = current || defaultBrandKit
       return {
-        [field]: valu
+        ...base,
+        [field]: value
+      }
     })
+  }
 
+  const addToList = (field: keyof BrandKit, value: string, setter: (v: string) => void) => {
     if (!value.trim()) return
     setBrandKit((current) => {
       const base = current || defaultBrandKit
@@ -57,7 +77,7 @@ export function BrandKitEditor({ language }:
     <Card className="glass-panel p-6 border-2 rounded-2xl">
       <div className="flex items-center gap-3 mb-6">
         <div className="p-3 rounded-xl bg-primary/10">
-          <Palette size={28} weight="fill" className="text-primary" />
+          <Palette size={28} className="text-primary" />
         </div>
         <h2 className="text-2xl font-bold tracking-tight">
           {language === 'es' ? 'Brand Kit' : 'Brand Kit'}
@@ -129,40 +149,9 @@ export function BrandKitEditor({ language }:
             </div>
           </div>
 
-              <Label className="text-xs uppercase font-bold tracking-wider text-primary">
-                {language === 'es' ? 'Nivel de Formalidad' : 'Formality Level'}
-              </Label>
-              <Select value={brandKit?.formality || 'professional'} onValueChange={(v: any) => handleUpdate('formality', v)}>
-                <SelectTrigger className="glass-panel-hover border-2 rounded-xl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="glass-panel border-2">
-                  <SelectItem value="casual">{language === 'es' ? 'Casual' : 'Casual'}</SelectItem>
-                  <SelectItem value="professional">{language === 'es' ? 'Profesional' : 'Professional'}</SelectItem>
-                  <SelectItem value="formal">{language === 'es' ? 'Formal' : 'Formal'}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs uppercase font-bold tracking-wider text-primary">
-                {language === 'es' ? 'Usar Emojis' : 'Use Emojis'}
-              </Label>
-              <div className="flex items-center h-10 px-4 glass-panel-hover border-2 rounded-xl">
-                <Switch
-                  checked={brandKit?.useEmojis || false}
-                  onCheckedChange={(v) => handleUpdate('useEmojis', v)}
-                />
-                <span className="ml-3 text-sm font-medium">
-                  {brandKit?.useEmojis ? (language === 'es' ? 'Sí' : 'Yes') : (language === 'es' ? 'No' : 'No')}
-                </span>
-              </div>
-            </div>
-          </div>
-
           <div className="space-y-2">
             <Label className="text-xs uppercase font-bold tracking-wider text-success flex items-center gap-2">
-              <Check size={16} weight="bold" />
+              <Check size={16} />
               {language === 'es' ? 'Siempre Hacer (Do)' : 'Always Do'}
             </Label>
             <div className="flex gap-2">
@@ -174,14 +163,14 @@ export function BrandKitEditor({ language }:
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addToList('doList', doInput, setDoInput))}
               />
               <Button type="button" onClick={() => addToList('doList', doInput, setDoInput)} variant="outline" className="rounded-xl">
-                <Plus size={18} weight="bold" />
+                <Plus size={18} />
               </Button>
             </div>
             {brandKit?.doList && brandKit.doList.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {brandKit.doList.map((item, idx) => (
                   <Badge key={idx} variant="default" className="rounded-lg cursor-pointer bg-success" onClick={() => removeFromList('doList', idx)}>
-                    {item} <X size={14} className="ml-1" weight="bold" />
+                    {item} <X size={14} className="ml-1" />
                   </Badge>
                 ))}
               </div>
@@ -190,7 +179,7 @@ export function BrandKitEditor({ language }:
 
           <div className="space-y-2">
             <Label className="text-xs uppercase font-bold tracking-wider text-destructive flex items-center gap-2">
-              <X size={16} weight="bold" />
+              <X size={16} />
               {language === 'es' ? 'Nunca Hacer (Don\'t)' : 'Never Do'}
             </Label>
             <div className="flex gap-2">
@@ -202,14 +191,14 @@ export function BrandKitEditor({ language }:
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addToList('dontList', dontInput, setDontInput))}
               />
               <Button type="button" onClick={() => addToList('dontList', dontInput, setDontInput)} variant="outline" className="rounded-xl">
-                <Plus size={18} weight="bold" />
+                <Plus size={18} />
               </Button>
             </div>
             {brandKit?.dontList && brandKit.dontList.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {brandKit.dontList.map((item, idx) => (
                   <Badge key={idx} variant="destructive" className="rounded-lg cursor-pointer" onClick={() => removeFromList('dontList', idx)}>
-                    {item} <X size={14} className="ml-1" weight="bold" />
+                    {item} <X size={14} className="ml-1" />
                   </Badge>
                 ))}
               </div>
@@ -229,14 +218,14 @@ export function BrandKitEditor({ language }:
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addToList('forbiddenWords', forbiddenInput, setForbiddenInput))}
               />
               <Button type="button" onClick={() => addToList('forbiddenWords', forbiddenInput, setForbiddenInput)} variant="outline" className="rounded-xl">
-                <Plus size={18} weight="bold" />
+                <Plus size={18} />
               </Button>
             </div>
             {brandKit?.forbiddenWords && brandKit.forbiddenWords.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {brandKit.forbiddenWords.map((item, idx) => (
                   <Badge key={idx} variant="outline" className="rounded-lg cursor-pointer border-destructive text-destructive" onClick={() => removeFromList('forbiddenWords', idx)}>
-                    {item} <X size={14} className="ml-1" weight="bold" />
+                    {item} <X size={14} className="ml-1" />
                   </Badge>
                 ))}
               </div>
@@ -256,9 +245,34 @@ export function BrandKitEditor({ language }:
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addToList('allowedClaims', claimInput, setClaimInput))}
               />
               <Button type="button" onClick={() => addToList('allowedClaims', claimInput, setClaimInput)} variant="outline" className="rounded-xl">
-                <Plus size={18} weight="bold" />
+                <Plus size={18} />
               </Button>
             </div>
+            {brandKit?.allowedClaims && brandKit.allowedClaims.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {brandKit.allowedClaims.map((item, idx) => (
+                  <Badge key={idx} variant="secondary" className="rounded-lg cursor-pointer" onClick={() => removeFromList('allowedClaims', idx)}>
+                    {item} <X size={14} className="ml-1" />
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs uppercase font-bold tracking-wider text-primary">
+              {language === 'es' ? 'Ejemplos de Copy' : 'Copy Examples'}
+            </Label>
+            <div className="flex gap-2">
+              <Textarea
+                value={exampleInput}
+                onChange={(e) => setExampleInput(e.target.value)}
+                placeholder={language === 'es' ? 'ej., Revoluciona tu workflow con IA' : 'e.g., Revolutionize your workflow with AI'}
+                className="glass-panel-hover border-2 rounded-xl resize-none"
+                rows={2}
+              />
+              <Button type="button" onClick={() => addToList('examples', exampleInput, setExampleInput)} variant="outline" className="rounded-xl">
+                <Plus size={18} />
               </Button>
             </div>
             {brandKit?.examples && brandKit.examples.length > 0 && (
@@ -273,7 +287,7 @@ export function BrandKitEditor({ language }:
                       className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={() => removeFromList('examples', idx)}
                     >
-                      <X size={16} weight="bold" />
+                      <X size={16} />
                     </Button>
                   </div>
                 ))}
