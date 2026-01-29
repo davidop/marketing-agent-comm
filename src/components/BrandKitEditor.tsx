@@ -1,27 +1,16 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { Input } from '@/components/ui/inpu
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Palette, Plus, X, Check } from '@phosphor-icons/react'
-import type { BrandKit } from '@/lib/types'
+import { Switch } from '@/components/ui/switc
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Card } from '@/components/ui/card'
 
-interface BrandKitEditorProps {
-  language: 'es' | 'en'
-}
-
-export function BrandKitEditor({ language }: BrandKitEditorProps) {
-  const [brandKit, setBrandKit] = useKV<BrandKit>('brand-kit', {
-    voice: '',
-    tone: '',
     doList: [],
     dontList: [],
     forbiddenWords: [],
