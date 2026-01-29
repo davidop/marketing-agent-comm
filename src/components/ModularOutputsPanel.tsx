@@ -13,7 +13,8 @@ import {
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { BrandConsistencyEvaluator } from '@/components/BrandConsistencyEvaluator'
-import type { CampaignOutput } from '@/lib/types'
+import { CreativeRoutesDisplay } from '@/components/CreativeRoutesDisplay'
+import type { CampaignOutput, CreativeRoute } from '@/lib/types'
 
 interface ModularOutputsPanelProps {
   outputs: Partial<CampaignOutput>
@@ -263,16 +264,24 @@ export function ModularOutputsPanel({ outputs, isGenerating, language, onRegener
 
         <TabsContent value="creative" className="mt-0">
           <div className="grid grid-cols-1 gap-4">
-            <OutputBlock
-              title={language === 'es' ? 'Rutas Creativas' : 'Creative Routes'}
-              icon={<Lightning size={20} weight="fill" className="text-accent" />}
-              content={outputs.creativeRoutes || ''}
-              isLoading={isGenerating}
-              emptyMessage={language === 'es' ? 'Diferentes ángulos creativos para tu campaña' : 'Different creative angles for your campaign'}
-              onRegenerate={() => onRegenerateBlock?.('creativeRoutes')}
-              language={language}
-              variant="highlight"
-            />
+            {Array.isArray(outputs.creativeRoutes) ? (
+              <CreativeRoutesDisplay
+                routes={outputs.creativeRoutes}
+                language={language}
+                isLoading={isGenerating}
+              />
+            ) : (
+              <OutputBlock
+                title={language === 'es' ? 'Rutas Creativas' : 'Creative Routes'}
+                icon={<Lightning size={20} weight="fill" className="text-accent" />}
+                content={outputs.creativeRoutes || ''}
+                isLoading={isGenerating}
+                emptyMessage={language === 'es' ? 'Diferentes ángulos creativos para tu campaña' : 'Different creative angles for your campaign'}
+                onRegenerate={() => onRegenerateBlock?.('creativeRoutes')}
+                language={language}
+                variant="highlight"
+              />
+            )}
 
             <OutputBlock
               title={language === 'es' ? 'Kit de Landing' : 'Landing Kit'}

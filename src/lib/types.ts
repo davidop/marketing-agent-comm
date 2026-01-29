@@ -66,6 +66,21 @@ export interface ContentCalendarItem {
   description: string
 }
 
+export interface CreativeRoute {
+  type: 'safe' | 'bold' | 'premium'
+  bigIdea: string
+  tagline: string
+  hooks: string[]
+  adExamples: {
+    title: string
+    body: string
+    cta: string
+  }[]
+  risk: 'bajo' | 'medio' | 'alto'
+  whenToUse: string
+  expectedResults: string
+}
+
 export interface CampaignOutput {
   overview?: {
     objective: string
@@ -82,7 +97,7 @@ export interface CampaignOutput {
     }
   }
   strategy: string
-  creativeRoutes: string
+  creativeRoutes: string | CreativeRoute[]
   funnelBlueprint: string
   paidPack: string
   landingKit: string

@@ -139,14 +139,61 @@ ${briefData.mainPromise ? `Promesa Principal: ${briefData.mainPromise}` : ''}
 ${isSpanish ? 'Incluye: Visión general, posicionamiento, enfoque de audiencia, estrategia por canal, y asignación de presupuesto.' : 'Include: Overview, positioning, audience approach, channel strategy, and budget allocation.'}`
 
       // @ts-expect-error - spark global is provided by runtime
-      const creativeRoutesPrompt = spark.llmPrompt`${isSpanish ? 'Eres un director creativo. Proporciona 4 rutas creativas distintas (ángulos) para esta campaña:' : 'You are a creative director. Provide 4 distinct creative routes (angles) for this campaign:'}
+      const creativeRoutesPrompt = spark.llmPrompt`${isSpanish ? 'Eres un director creativo premium. Crea EXACTAMENTE 3 rutas creativas con todos los detalles:' : 'You are a premium creative director. Create EXACTLY 3 creative routes with all details:'}
 ${brandGuidelines}
 
 Producto: ${briefData.product}
 Promesa: ${briefData.mainPromise || 'TBD'}
 Audiencia: ${briefData.audience}
+Objetivos: ${briefData.goals}
 
-${isSpanish ? 'Para cada ruta incluye: Nombre del ángulo, concepto central, tono, y ejemplos visuales/verbales.' : 'For each route include: Angle name, core concept, tone, and visual/verbal examples.'}`
+${isSpanish ? 'Devuelve un objeto JSON con una propiedad "routes" que contenga un array de 3 objetos, UNO PARA CADA RUTA.' : 'Return a JSON object with a "routes" property containing an array of 3 objects, ONE FOR EACH ROUTE.'}
+
+${isSpanish ? 'Las 3 rutas deben ser:' : 'The 3 routes must be:'}
+
+RUTA 1 - SEGURA (type: "safe"):
+- ${isSpanish ? 'Enfoque: Claridad, directo al punto, sin riesgos' : 'Approach: Clarity, straight to the point, no risks'}
+- ${isSpanish ? 'Tono: Profesional, confiable, educativo' : 'Tone: Professional, trustworthy, educational'}
+- ${isSpanish ? 'Ideal para: Audiencias conservadoras, B2B, productos complejos' : 'Ideal for: Conservative audiences, B2B, complex products'}
+
+RUTA 2 - ATREVIDA (type: "bold"):
+- ${isSpanish ? 'Enfoque: Hook fuerte, disruptivo, provocador' : 'Approach: Strong hook, disruptive, provocative'}
+- ${isSpanish ? 'Tono: Urgente, directo, emocional' : 'Tone: Urgent, direct, emotional'}
+- ${isSpanish ? 'Ideal para: Mercados saturados, necesitas destacar, audiencia joven' : 'Ideal for: Saturated markets, need to stand out, young audience'}
+
+RUTA 3 - PREMIUM (type: "premium"):
+- ${isSpanish ? 'Enfoque: Elegante, aspiracional, exclusivo' : 'Approach: Elegant, aspirational, exclusive'}
+- ${isSpanish ? 'Tono: Sofisticado, refinado, inspirador' : 'Tone: Sophisticated, refined, inspiring'}
+- ${isSpanish ? 'Ideal para: Productos premium, audiencia de alto poder adquisitivo' : 'Ideal for: Premium products, high-income audience'}
+
+${isSpanish ? 'Para CADA ruta, el objeto debe contener exactamente estas propiedades:' : 'For EACH route, the object must contain exactly these properties:'}
+
+{
+  "type": "safe" | "bold" | "premium",
+  "bigIdea": "${isSpanish ? '(Una frase de 15-25 palabras que captura el concepto central único de esta ruta)' : '(One sentence of 15-25 words capturing the unique central concept of this route)'}",
+  "tagline": "${isSpanish ? '(Un tagline memorable de 5-10 palabras que resume la promesa)' : '(A memorable 5-10 word tagline summarizing the promise)'}",
+  "hooks": [
+    "${isSpanish ? '(Hook 1: apertura impactante que capte atención inmediata)' : '(Hook 1: impactful opening that captures immediate attention)'}",
+    "${isSpanish ? '(Hook 2: variante con ángulo diferente)' : '(Hook 2: variant with different angle)'}",
+    "${isSpanish ? '(Hook 3: variante con otro ángulo)' : '(Hook 3: variant with another angle)'}",
+    "${isSpanish ? '(Hook 4: variante con otro ángulo)' : '(Hook 4: variant with another angle)'}",
+    "${isSpanish ? '(Hook 5: variante con otro ángulo)' : '(Hook 5: variant with another angle)'}"
+  ],
+  "adExamples": [
+    {
+      "title": "${isSpanish ? '(Título del anuncio 1, max 60 caracteres)' : '(Ad title 1, max 60 chars)'}",
+      "body": "${isSpanish ? '(Cuerpo del anuncio 1, 2-3 frases que desarrollen el hook, expliquen el beneficio y generen deseo)' : '(Ad body 1, 2-3 sentences developing the hook, explaining benefit and generating desire)'}",
+      "cta": "${isSpanish ? '(CTA específico, 2-4 palabras)' : '(Specific CTA, 2-4 words)'}"
+    },
+    "${isSpanish ? '(Repetir estructura para ejemplo 2)' : '(Repeat structure for example 2)'}",
+    "${isSpanish ? '(Repetir estructura para ejemplo 3)' : '(Repeat structure for example 3)'}"
+  ],
+  "risk": "bajo" | "medio" | "alto",
+  "whenToUse": "${isSpanish ? '(2-3 frases explicando cuándo esta ruta es la mejor opción: tipo de audiencia, contexto de mercado, objetivos)' : '(2-3 sentences explaining when this route is the best option: audience type, market context, objectives)'}",
+  "expectedResults": "${isSpanish ? '(2-3 frases sobre qué métricas/resultados esperar: CTR, conversión, percepción de marca)' : '(2-3 sentences about expected metrics/results: CTR, conversion, brand perception)'}"
+}
+
+${isSpanish ? 'IMPORTANTE: Devuelve SOLO el JSON válido con el formato exacto indicado. No añadas texto adicional fuera del JSON.' : 'IMPORTANT: Return ONLY the valid JSON with the exact format indicated. Do not add additional text outside the JSON.'}`
 
       // @ts-expect-error - spark global is provided by runtime
       const funnelPrompt = spark.llmPrompt`${isSpanish ? 'Eres un experto en funnels. Crea un blueprint del funnel completo:' : 'You are a funnel expert. Create a complete funnel blueprint:'}
@@ -252,7 +299,7 @@ ${isSpanish ? 'Devuelve un objeto JSON con una propiedad "variations" que conten
       const [
         overviewText,
         strategy,
-        creativeRoutes,
+        creativeRoutesJson,
         funnelBlueprint,
         paidPack,
         landingKit,
@@ -266,7 +313,7 @@ ${isSpanish ? 'Devuelve un objeto JSON con una propiedad "variations" que conten
       ] = await Promise.all([
         spark.llm(overviewPrompt),
         spark.llm(strategyPrompt),
-        spark.llm(creativeRoutesPrompt),
+        spark.llm(creativeRoutesPrompt, 'gpt-4o', true),
         spark.llm(funnelPrompt),
         spark.llm(paidPackPrompt),
         spark.llm(landingKitPrompt),
@@ -278,6 +325,16 @@ ${isSpanish ? 'Devuelve un objeto JSON con una propiedad "variations" que conten
         spark.llm(checklistPrompt),
         spark.llm(variationsPrompt, 'gpt-4o', true)
       ])
+
+      let parsedCreativeRoutes: any = creativeRoutesJson
+      try {
+        const parsed = JSON.parse(creativeRoutesJson)
+        if (parsed.routes && Array.isArray(parsed.routes)) {
+          parsedCreativeRoutes = parsed.routes
+        }
+      } catch (e) {
+        console.error('Failed to parse creative routes JSON, using text fallback', e)
+      }
 
       let parsedVariations: CopyVariation[] = []
       try {
@@ -433,7 +490,7 @@ ${isSpanish ? 'Devuelve un objeto JSON con una propiedad "variations" que conten
       setOutputs(() => ({
         overview: overviewData,
         strategy,
-        creativeRoutes,
+        creativeRoutes: parsedCreativeRoutes,
         funnelBlueprint,
         paidPack,
         landingKit,

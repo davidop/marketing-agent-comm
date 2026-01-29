@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { OutputCard } from '@/components/OutputCard'
 import { CampaignOverview } from '@/components/CampaignOverview'
+import { CreativeRoutesDisplay } from '@/components/CreativeRoutesDisplay'
 import { 
   Eye,
   Target,
@@ -20,7 +21,7 @@ import {
   Warning,
   CheckSquare
 } from '@phosphor-icons/react'
-import type { CampaignOutput, ContentCalendarItem } from '@/lib/types'
+import type { CampaignOutput, ContentCalendarItem, CreativeRoute } from '@/lib/types'
 
 interface CampaignDashboardProps {
   outputs: Partial<CampaignOutput>
@@ -142,17 +143,25 @@ export function CampaignDashboard({
         </TabsContent>
 
         <TabsContent value="creative" className="mt-0">
-          <OutputCard
-            title={t('Rutas Creativas', 'Creative Routes')}
-            icon={<Palette size={20} weight="fill" />}
-            content={outputs.creativeRoutes || ''}
-            isLoading={isGenerating}
-            emptyMessage={t('Las rutas creativas se generarán aquí', 'Creative routes will be generated here')}
-            language={language}
-            onRegenerate={() => onRegenerateBlock?.('creativeRoutes')}
-            onSaveVersion={(content) => handleSaveVersion('creativeRoutes', content)}
-            blockName="creativeRoutes"
-          />
+          {Array.isArray(outputs.creativeRoutes) ? (
+            <CreativeRoutesDisplay
+              routes={outputs.creativeRoutes}
+              language={language}
+              isLoading={isGenerating}
+            />
+          ) : (
+            <OutputCard
+              title={t('Rutas Creativas', 'Creative Routes')}
+              icon={<Palette size={20} weight="fill" />}
+              content={outputs.creativeRoutes || ''}
+              isLoading={isGenerating}
+              emptyMessage={t('Las rutas creativas se generarán aquí', 'Creative routes will be generated here')}
+              language={language}
+              onRegenerate={() => onRegenerateBlock?.('creativeRoutes')}
+              onSaveVersion={(content) => handleSaveVersion('creativeRoutes', content)}
+              blockName="creativeRoutes"
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="funnel" className="mt-0">
