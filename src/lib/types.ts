@@ -1,13 +1,15 @@
 export interface BrandKit {
-  tone: string
-  voice?: string
-  formality?: string
-  doList: string[]
-  dontList: string[]
-  forbiddenWords: string[]
-  allowedClaims: string[]
+  tone: 'cercano' | 'profesional' | 'premium' | 'canalla' | 'tech'
+  formality: number
   useEmojis: boolean
-  examples?: string[]
+  emojiStyle: 'pocos' | 'moderados' | 'muchos'
+  forbiddenWords: string[]
+  preferredWords: string[]
+  allowedClaims: string[]
+  notAllowedClaims: string[]
+  brandExamplesYes: string[]
+  brandExamplesNo: string[]
+  preferredCTA: 'agenda-demo' | 'compra' | 'descarga' | 'suscribete' | 'contacta'
 }
 
 export interface CampaignBriefData {

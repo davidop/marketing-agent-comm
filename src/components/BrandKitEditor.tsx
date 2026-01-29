@@ -8,8 +8,10 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { Slider } from '@/components/ui/slider'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Palette, Plus, X } from '@phosphor-icons/react'
+import { Separator } from '@/components/ui/separator'
+import { Palette, Plus, X, CheckCircle, XCircle, FloppyDisk } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import type { Language } from '@/lib/i18n'
 import type { BrandKit } from '@/lib/types'
@@ -20,25 +22,29 @@ interface BrandKitEditorProps {
 
 export function BrandKitEditor({ language }: BrandKitEditorProps) {
   const defaultBrandKit: BrandKit = {
-    voice: '',
-    tone: '',
-    doList: [],
-    dontList: [],
-    forbiddenWords: [],
-    allowedClaims: [],
+    tone: 'profesional',
+    formality: 3,
     useEmojis: false,
-    formality: 'professional',
-    examples: []
+    emojiStyle: 'moderados',
+    forbiddenWords: [],
+    preferredWords: [],
+    allowedClaims: [],
+    notAllowedClaims: [],
+    brandExamplesYes: [],
+    brandExamplesNo: [],
+    preferredCTA: 'contacta'
   }
 
-  const [brandKit, setBrandKit] = useKV<BrandKit>('brand-kit', defaultBrandKit)
-  const [doInput, setDoInput] = useState('')
-  const [dontInput, setDontInput] = useState('')
+  const [brandKit, setBrandKit] = useKV<BrandKit>('brand-kit-v2', defaultBrandKit)
+  
   const [forbiddenInput, setForbiddenInput] = useState('')
-  const [claimInput, setClaimInput] = useState('')
-  const [exampleInput, setExampleInput] = useState('')
+  const [preferredInput, setPreferredInput] = useState('')
+  const [allowedClaimInput, setAllowedClaimInput] = useState('')
+  const [notAllowedClaimInput, setNotAllowedClaimInput] = useState('')
+  const [exampleYesInput, setExampleYesInput] = useState('')
+  const [exampleNoInput, setExampleNoInput] = useState('')
 
-  const handleUpdate = (field: keyof BrandKit, value: string | boolean) => {
+  const handleUpdate = <K extends keyof BrandKit>(field: K, value: BrandKit[K]) => {
     setBrandKit((current) => {
       const base = current || defaultBrandKit
       return {
@@ -48,246 +54,510 @@ export function BrandKitEditor({ language }: BrandKitEditorProps) {
     })
   }
 
-  const addToList = (field: keyof BrandKit, value: string, setter: (v: string) => void) => {
+  const addToList = <K extends keyof BrandKit>(
+    field: K,
+    value: string,
+    setter: (v: string) => void
+  ) => {
     if (!value.trim()) return
     setBrandKit((current) => {
       const base = current || defaultBrandKit
       const currentList = (base[field] as string[]) || []
       return {
         ...base,
-        [field]: [...currentList, value.trim()]
+        [field]: [...currentList, value.trim()] as BrandKit[K]
       }
     })
     setter('')
     toast.success(language === 'es' ? 'Agregado' : 'Added')
   }
 
-  const removeFromList = (field: keyof BrandKit, index: number) => {
+  const removeFromList = <K extends keyof BrandKit>(field: K, index: number) => {
     setBrandKit((current) => {
       const base = current || defaultBrandKit
       const currentList = (base[field] as string[]) || []
       return {
         ...base,
-        [field]: currentList.filter((_, i) => i !== index)
+        [field]: currentList.filter((_, i) => i !== index) as BrandKit[K]
       }
     })
   }
 
+  const handleSave = () => {
+    toast.success(language === 'es' ? '✅ Brand Kit guardado' : '✅ Brand Kit saved')
+  }
+
+  const kit = brandKit || defaultBrandKit
+
   return (
     <Card className="glass-panel p-6 border-2 rounded-2xl">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-3 rounded-xl bg-primary/10">
-          <Palette size={28} className="text-primary" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="p-3 rounded-xl bg-primary/10">
+            <Palette size={28} className="text-primary" weight="fill" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">
+              {language === 'es' ? 'Brand Kit' : 'Brand Kit'}
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              {language === 'es' 
+                ? 'Define el estilo y reglas de tu marca' 
+                : 'Define your brand style and rules'}
+            </p>
+          </div>
         </div>
-        <h2 className="text-2xl font-bold tracking-tight">
-          {language === 'es' ? 'Brand Kit' : 'Brand Kit'}
-        </h2>
+        <Button onClick={handleSave} className="rounded-xl gap-2">
+          <FloppyDisk size={18} weight="fill" />
+          {language === 'es' ? 'Guardar' : 'Save'}
+        </Button>
       </div>
-      <p className="text-sm text-muted-foreground mb-6">
-        {language === 'es' 
-          ? 'Define las reglas y estilo de tu marca para que todo el copy generado sea consistente.' 
-          : 'Define your brand rules and style so all generated copy is consistent.'}
-      </p>
-      <ScrollArea className="h-[calc(100vh-280px)] pr-4">
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <Label className="text-xs uppercase font-bold tracking-wider text-primary">
-              {language === 'es' ? 'Voz de Marca' : 'Brand Voice'}
-            </Label>
-            <Textarea
-              value={brandKit?.voice || ''}
-              onChange={(e) => handleUpdate('voice', e.target.value)}
-              placeholder={language === 'es' ? 'ej., Profesional, cercano, innovador' : 'e.g., Professional, approachable, innovative'}
-              className="glass-panel-hover border-2 rounded-xl min-h-[80px]"
-            />
-          </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs uppercase font-bold tracking-wider text-primary">
-              {language === 'es' ? 'Tono' : 'Tone'}
-            </Label>
-            <Textarea
-              value={brandKit?.tone || ''}
-              onChange={(e) => handleUpdate('tone', e.target.value)}
-              placeholder={language === 'es' ? 'ej., Optimista, directo, empático' : 'e.g., Optimistic, direct, empathetic'}
-              className="glass-panel-hover border-2 rounded-xl min-h-[80px]"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs uppercase font-bold tracking-wider text-primary">
-              {language === 'es' ? 'Formalidad' : 'Formality'}
+      <ScrollArea className="h-[calc(100vh-240px)] pr-4">
+        <div className="space-y-8">
+          
+          {/* Tone Selection */}
+          <div className="space-y-3">
+            <Label className="text-sm font-bold text-primary">
+              {language === 'es' ? '🎭 Tono de Marca' : '🎭 Brand Tone'}
             </Label>
             <Select 
-              value={brandKit?.formality || 'professional'} 
-              onValueChange={(value) => handleUpdate('formality', value)}
+              value={kit.tone} 
+              onValueChange={(value: BrandKit['tone']) => handleUpdate('tone', value)}
             >
-              <SelectTrigger className="glass-panel-hover border-2 rounded-xl">
+              <SelectTrigger className="glass-panel-hover border-2 rounded-xl h-12">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="casual">{language === 'es' ? 'Casual' : 'Casual'}</SelectItem>
-                <SelectItem value="professional">{language === 'es' ? 'Profesional' : 'Professional'}</SelectItem>
-                <SelectItem value="formal">{language === 'es' ? 'Formal' : 'Formal'}</SelectItem>
+                <SelectItem value="cercano">
+                  {language === 'es' ? '🤝 Cercano - Amigable y accesible' : '🤝 Approachable - Friendly and accessible'}
+                </SelectItem>
+                <SelectItem value="profesional">
+                  {language === 'es' ? '💼 Profesional - Confiable y competente' : '💼 Professional - Reliable and competent'}
+                </SelectItem>
+                <SelectItem value="premium">
+                  {language === 'es' ? '💎 Premium - Exclusivo y sofisticado' : '💎 Premium - Exclusive and sophisticated'}
+                </SelectItem>
+                <SelectItem value="canalla">
+                  {language === 'es' ? '😎 Canalla - Atrevido y directo' : '😎 Bold - Daring and direct'}
+                </SelectItem>
+                <SelectItem value="tech">
+                  {language === 'es' ? '🚀 Tech - Innovador y técnico' : '🚀 Tech - Innovative and technical'}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <Separator />
+
+          {/* Formality Slider */}
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label className="text-xs uppercase font-bold tracking-wider text-primary">
-                {language === 'es' ? 'Usar Emojis' : 'Use Emojis'}
+              <Label className="text-sm font-bold text-primary">
+                {language === 'es' ? '📊 Nivel de Formalidad' : '📊 Formality Level'}
+              </Label>
+              <Badge variant="outline" className="rounded-lg text-lg font-bold px-3">
+                {kit.formality}/5
+              </Badge>
+            </div>
+            <div className="space-y-2">
+              <Slider
+                value={[kit.formality]}
+                onValueChange={(values) => handleUpdate('formality', values[0])}
+                min={1}
+                max={5}
+                step={1}
+                className="py-4"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>{language === 'es' ? 'Muy informal' : 'Very informal'}</span>
+                <span>{language === 'es' ? 'Muy formal' : 'Very formal'}</span>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Emojis Settings */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-bold text-primary">
+                {language === 'es' ? '😊 Usar Emojis' : '😊 Use Emojis'}
               </Label>
               <Switch 
-                checked={brandKit?.useEmojis || false}
+                checked={kit.useEmojis}
                 onCheckedChange={(checked) => handleUpdate('useEmojis', checked)}
               />
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs uppercase font-bold tracking-wider text-success">
-              {language === 'es' ? 'Siempre Hacer (Do)' : 'Always Do'}
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                value={doInput}
-                onChange={(e) => setDoInput(e.target.value)}
-                placeholder={language === 'es' ? 'ej., Usar datos específicos' : 'e.g., Use specific data'}
-                className="glass-panel-hover border-2 rounded-xl"
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addToList('doList', doInput, setDoInput))}
-              />
-              <Button type="button" onClick={() => addToList('doList', doInput, setDoInput)} variant="outline" className="rounded-xl">
-                <Plus size={18} />
-              </Button>
-            </div>
-            {brandKit?.doList && brandKit.doList.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {brandKit.doList.map((item, idx) => (
-                  <Badge key={idx} variant="outline" className="rounded-lg cursor-pointer border-success text-success" onClick={() => removeFromList('doList', idx)}>
-                    {item} <X size={14} className="ml-1" />
-                  </Badge>
-                ))}
+            
+            {kit.useEmojis && (
+              <div className="space-y-2 pl-4 border-l-2 border-primary/30">
+                <Label className="text-xs font-semibold text-muted-foreground">
+                  {language === 'es' ? 'Estilo de Emojis' : 'Emoji Style'}
+                </Label>
+                <Select 
+                  value={kit.emojiStyle} 
+                  onValueChange={(value: BrandKit['emojiStyle']) => handleUpdate('emojiStyle', value)}
+                >
+                  <SelectTrigger className="glass-panel-hover border-2 rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pocos">
+                      {language === 'es' ? '🎯 Pocos - Solo en puntos clave' : '🎯 Few - Only at key points'}
+                    </SelectItem>
+                    <SelectItem value="moderados">
+                      {language === 'es' ? '✨ Moderados - Equilibrado' : '✨ Moderate - Balanced'}
+                    </SelectItem>
+                    <SelectItem value="muchos">
+                      {language === 'es' ? '🎉 Muchos - Expresivo y dinámico' : '🎉 Many - Expressive and dynamic'}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs uppercase font-bold tracking-wider text-destructive">
-              {language === 'es' ? 'Nunca Hacer (Don\'t)' : 'Never Do'}
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                value={dontInput}
-                onChange={(e) => setDontInput(e.target.value)}
-                placeholder={language === 'es' ? 'ej., Usar jerga técnica compleja' : 'e.g., Use complex technical jargon'}
-                className="glass-panel-hover border-2 rounded-xl"
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addToList('dontList', dontInput, setDontInput))}
-              />
-              <Button type="button" onClick={() => addToList('dontList', dontInput, setDontInput)} variant="outline" className="rounded-xl">
-                <Plus size={18} />
-              </Button>
-            </div>
-            {brandKit?.dontList && brandKit.dontList.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {brandKit.dontList.map((item, idx) => (
-                  <Badge key={idx} variant="destructive" className="rounded-lg cursor-pointer" onClick={() => removeFromList('dontList', idx)}>
-                    {item} <X size={14} className="ml-1" />
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
+          <Separator />
 
-          <div className="space-y-2">
-            <Label className="text-xs uppercase font-bold tracking-wider text-destructive">
-              {language === 'es' ? 'Palabras Prohibidas' : 'Forbidden Words'}
+          {/* Forbidden Words */}
+          <div className="space-y-3">
+            <Label className="text-sm font-bold text-destructive">
+              {language === 'es' ? '🚫 Palabras Prohibidas' : '🚫 Forbidden Words'}
             </Label>
             <div className="flex gap-2">
               <Input
                 value={forbiddenInput}
                 onChange={(e) => setForbiddenInput(e.target.value)}
-                placeholder={language === 'es' ? 'ej., barato, gratis' : 'e.g., cheap, free'}
+                placeholder={language === 'es' ? 'ej., barato, gratis, oferta...' : 'e.g., cheap, free, offer...'}
                 className="glass-panel-hover border-2 rounded-xl"
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addToList('forbiddenWords', forbiddenInput, setForbiddenInput))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    addToList('forbiddenWords', forbiddenInput, setForbiddenInput)
+                  }
+                }}
               />
-              <Button type="button" onClick={() => addToList('forbiddenWords', forbiddenInput, setForbiddenInput)} variant="outline" className="rounded-xl">
-                <Plus size={18} />
+              <Button 
+                type="button" 
+                onClick={() => addToList('forbiddenWords', forbiddenInput, setForbiddenInput)} 
+                variant="outline" 
+                className="rounded-xl shrink-0"
+              >
+                <Plus size={18} weight="bold" />
               </Button>
             </div>
-            {brandKit?.forbiddenWords && brandKit.forbiddenWords.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {brandKit.forbiddenWords.map((item, idx) => (
-                  <Badge key={idx} variant="outline" className="rounded-lg cursor-pointer border-destructive text-destructive" onClick={() => removeFromList('forbiddenWords', idx)}>
-                    {item} <X size={14} className="ml-1" />
+            {kit.forbiddenWords.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {kit.forbiddenWords.map((word, idx) => (
+                  <Badge 
+                    key={idx} 
+                    variant="destructive" 
+                    className="rounded-lg cursor-pointer gap-1"
+                    onClick={() => removeFromList('forbiddenWords', idx)}
+                  >
+                    {word} <X size={14} weight="bold" />
                   </Badge>
                 ))}
               </div>
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs uppercase font-bold tracking-wider text-success">
-              {language === 'es' ? 'Claims Permitidos' : 'Allowed Claims'}
+          {/* Preferred Words */}
+          <div className="space-y-3">
+            <Label className="text-sm font-bold text-primary">
+              {language === 'es' ? '⭐ Palabras Preferidas' : '⭐ Preferred Words'}
             </Label>
             <div className="flex gap-2">
               <Input
-                value={claimInput}
-                onChange={(e) => setClaimInput(e.target.value)}
-                placeholder={language === 'es' ? 'ej., #1 en seguridad cloud' : 'e.g., #1 in cloud security'}
+                value={preferredInput}
+                onChange={(e) => setPreferredInput(e.target.value)}
+                placeholder={language === 'es' ? 'ej., transformar, potenciar, innovar...' : 'e.g., transform, empower, innovate...'}
                 className="glass-panel-hover border-2 rounded-xl"
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addToList('allowedClaims', claimInput, setClaimInput))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    addToList('preferredWords', preferredInput, setPreferredInput)
+                  }
+                }}
               />
-              <Button type="button" onClick={() => addToList('allowedClaims', claimInput, setClaimInput)} variant="outline" className="rounded-xl">
-                <Plus size={18} />
+              <Button 
+                type="button" 
+                onClick={() => addToList('preferredWords', preferredInput, setPreferredInput)} 
+                variant="outline" 
+                className="rounded-xl shrink-0"
+              >
+                <Plus size={18} weight="bold" />
               </Button>
             </div>
-            {brandKit?.allowedClaims && brandKit.allowedClaims.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {brandKit.allowedClaims.map((item, idx) => (
-                  <Badge key={idx} variant="outline" className="rounded-lg cursor-pointer border-success text-success" onClick={() => removeFromList('allowedClaims', idx)}>
-                    {item} <X size={14} className="ml-1" />
+            {kit.preferredWords.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {kit.preferredWords.map((word, idx) => (
+                  <Badge 
+                    key={idx} 
+                    variant="outline" 
+                    className="rounded-lg cursor-pointer gap-1 border-primary text-primary"
+                    onClick={() => removeFromList('preferredWords', idx)}
+                  >
+                    {word} <X size={14} weight="bold" />
                   </Badge>
                 ))}
               </div>
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs uppercase font-bold tracking-wider text-primary">
-              {language === 'es' ? 'Ejemplos de Copy Ideal' : 'Ideal Copy Examples'}
+          <Separator />
+
+          {/* Allowed Claims */}
+          <div className="space-y-3">
+            <Label className="text-sm font-bold text-primary flex items-center gap-2">
+              <CheckCircle size={18} weight="fill" />
+              {language === 'es' ? 'Claims Permitidos' : 'Allowed Claims'}
             </Label>
             <div className="flex gap-2">
               <Textarea
-                value={exampleInput}
-                onChange={(e) => setExampleInput(e.target.value)}
-                placeholder={language === 'es' ? 'ej., "Transforma tu negocio en 90 días"' : 'e.g., "Transform your business in 90 days"'}
+                value={allowedClaimInput}
+                onChange={(e) => setAllowedClaimInput(e.target.value)}
+                placeholder={language === 'es' ? 'ej., #1 en satisfacción de clientes según Forbes 2024' : 'e.g., #1 in customer satisfaction per Forbes 2024'}
                 className="glass-panel-hover border-2 rounded-xl min-h-[60px]"
-                onKeyPress={(e) => e.key === 'Enter' && e.ctrlKey && (e.preventDefault(), addToList('examples', exampleInput, setExampleInput))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.ctrlKey) {
+                    e.preventDefault()
+                    addToList('allowedClaims', allowedClaimInput, setAllowedClaimInput)
+                  }
+                }}
               />
-              <Button type="button" onClick={() => addToList('examples', exampleInput, setExampleInput)} variant="outline" className="rounded-xl">
-                <Plus size={18} />
+              <Button 
+                type="button" 
+                onClick={() => addToList('allowedClaims', allowedClaimInput, setAllowedClaimInput)} 
+                variant="outline" 
+                className="rounded-xl shrink-0"
+              >
+                <Plus size={18} weight="bold" />
               </Button>
             </div>
-            {brandKit?.examples && brandKit.examples.length > 0 && (
-              <div className="space-y-2 mt-2">
-                {brandKit.examples.map((item, idx) => (
-                  <div key={idx} className="glass-panel p-3 rounded-xl border-2 relative group">
-                    <p className="text-sm font-medium pr-8">{item}</p>
+            {kit.allowedClaims.length > 0 && (
+              <div className="space-y-2">
+                {kit.allowedClaims.map((claim, idx) => (
+                  <div 
+                    key={idx} 
+                    className="glass-panel p-3 rounded-xl border-2 border-primary/30 relative group"
+                  >
+                    <p className="text-sm pr-8">{claim}</p>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => removeFromList('examples', idx)}
+                      className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => removeFromList('allowedClaims', idx)}
                     >
-                      <X size={16} />
+                      <X size={16} weight="bold" />
                     </Button>
                   </div>
                 ))}
               </div>
             )}
           </div>
+
+          {/* Not Allowed Claims */}
+          <div className="space-y-3">
+            <Label className="text-sm font-bold text-destructive flex items-center gap-2">
+              <XCircle size={18} weight="fill" />
+              {language === 'es' ? 'Claims NO Permitidos' : 'NOT Allowed Claims'}
+            </Label>
+            <div className="flex gap-2">
+              <Textarea
+                value={notAllowedClaimInput}
+                onChange={(e) => setNotAllowedClaimInput(e.target.value)}
+                placeholder={language === 'es' ? 'ej., Duplica tus ventas en 7 días (no verificable)' : 'e.g., Double your sales in 7 days (not verifiable)'}
+                className="glass-panel-hover border-2 rounded-xl min-h-[60px]"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.ctrlKey) {
+                    e.preventDefault()
+                    addToList('notAllowedClaims', notAllowedClaimInput, setNotAllowedClaimInput)
+                  }
+                }}
+              />
+              <Button 
+                type="button" 
+                onClick={() => addToList('notAllowedClaims', notAllowedClaimInput, setNotAllowedClaimInput)} 
+                variant="outline" 
+                className="rounded-xl shrink-0"
+              >
+                <Plus size={18} weight="bold" />
+              </Button>
+            </div>
+            {kit.notAllowedClaims.length > 0 && (
+              <div className="space-y-2">
+                {kit.notAllowedClaims.map((claim, idx) => (
+                  <div 
+                    key={idx} 
+                    className="glass-panel p-3 rounded-xl border-2 border-destructive/30 relative group"
+                  >
+                    <p className="text-sm pr-8">{claim}</p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => removeFromList('notAllowedClaims', idx)}
+                    >
+                      <X size={16} weight="bold" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Brand Examples YES */}
+          <div className="space-y-3">
+            <Label className="text-sm font-bold text-primary flex items-center gap-2">
+              <CheckCircle size={18} weight="fill" />
+              {language === 'es' ? 'Ejemplos: "SÍ suena a mi marca"' : 'Examples: "YES sounds like my brand"'}
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              {language === 'es' 
+                ? 'Proporciona 2-3 ejemplos de copy que represente perfectamente tu marca' 
+                : 'Provide 2-3 examples of copy that perfectly represents your brand'}
+            </p>
+            <div className="flex gap-2">
+              <Textarea
+                value={exampleYesInput}
+                onChange={(e) => setExampleYesInput(e.target.value)}
+                placeholder={language === 'es' ? 'ej., "Transforma tu estrategia en 90 días con resultados medibles"' : 'e.g., "Transform your strategy in 90 days with measurable results"'}
+                className="glass-panel-hover border-2 rounded-xl min-h-[80px]"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.ctrlKey) {
+                    e.preventDefault()
+                    addToList('brandExamplesYes', exampleYesInput, setExampleYesInput)
+                  }
+                }}
+              />
+              <Button 
+                type="button" 
+                onClick={() => addToList('brandExamplesYes', exampleYesInput, setExampleYesInput)} 
+                variant="outline" 
+                className="rounded-xl shrink-0"
+              >
+                <Plus size={18} weight="bold" />
+              </Button>
+            </div>
+            {kit.brandExamplesYes.length > 0 && (
+              <div className="space-y-2">
+                {kit.brandExamplesYes.map((example, idx) => (
+                  <div 
+                    key={idx} 
+                    className="glass-panel p-4 rounded-xl border-2 border-primary/40 relative group bg-primary/5"
+                  >
+                    <p className="text-sm font-medium pr-8 leading-relaxed">{example}</p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => removeFromList('brandExamplesYes', idx)}
+                    >
+                      <X size={16} weight="bold" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Brand Examples NO */}
+          <div className="space-y-3">
+            <Label className="text-sm font-bold text-destructive flex items-center gap-2">
+              <XCircle size={18} weight="fill" />
+              {language === 'es' ? 'Ejemplos: "NO suena a mi marca"' : 'Examples: "NO does not sound like my brand"'}
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              {language === 'es' 
+                ? 'Proporciona 2-3 ejemplos de copy que NO quieres asociar a tu marca' 
+                : 'Provide 2-3 examples of copy you do NOT want associated with your brand'}
+            </p>
+            <div className="flex gap-2">
+              <Textarea
+                value={exampleNoInput}
+                onChange={(e) => setExampleNoInput(e.target.value)}
+                placeholder={language === 'es' ? 'ej., "¡OFERTA LOCA! Compra ya antes de que se acabe!!!"' : 'e.g., "CRAZY OFFER! Buy now before it\'s gone!!!"'}
+                className="glass-panel-hover border-2 rounded-xl min-h-[80px]"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.ctrlKey) {
+                    e.preventDefault()
+                    addToList('brandExamplesNo', exampleNoInput, setExampleNoInput)
+                  }
+                }}
+              />
+              <Button 
+                type="button" 
+                onClick={() => addToList('brandExamplesNo', exampleNoInput, setExampleNoInput)} 
+                variant="outline" 
+                className="rounded-xl shrink-0"
+              >
+                <Plus size={18} weight="bold" />
+              </Button>
+            </div>
+            {kit.brandExamplesNo.length > 0 && (
+              <div className="space-y-2">
+                {kit.brandExamplesNo.map((example, idx) => (
+                  <div 
+                    key={idx} 
+                    className="glass-panel p-4 rounded-xl border-2 border-destructive/40 relative group bg-destructive/5"
+                  >
+                    <p className="text-sm font-medium pr-8 leading-relaxed">{example}</p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => removeFromList('brandExamplesNo', idx)}
+                    >
+                      <X size={16} weight="bold" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Preferred CTA */}
+          <div className="space-y-3">
+            <Label className="text-sm font-bold text-primary">
+              {language === 'es' ? '🎯 CTA Preferido' : '🎯 Preferred CTA'}
+            </Label>
+            <Select 
+              value={kit.preferredCTA} 
+              onValueChange={(value: BrandKit['preferredCTA']) => handleUpdate('preferredCTA', value)}
+            >
+              <SelectTrigger className="glass-panel-hover border-2 rounded-xl h-12">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="agenda-demo">
+                  {language === 'es' ? '📅 Agenda una Demo' : '📅 Schedule a Demo'}
+                </SelectItem>
+                <SelectItem value="compra">
+                  {language === 'es' ? '🛒 Compra Ahora' : '🛒 Buy Now'}
+                </SelectItem>
+                <SelectItem value="descarga">
+                  {language === 'es' ? '📥 Descarga Gratis' : '📥 Download Free'}
+                </SelectItem>
+                <SelectItem value="suscribete">
+                  {language === 'es' ? '✉️ Suscríbete' : '✉️ Subscribe'}
+                </SelectItem>
+                <SelectItem value="contacta">
+                  {language === 'es' ? '💬 Contacta con Nosotros' : '💬 Contact Us'}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
         </div>
       </ScrollArea>
     </Card>

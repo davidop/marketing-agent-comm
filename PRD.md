@@ -1,16 +1,65 @@
 # Marketing Agent Command Center - Intelligent Campaign Brief System
 
-A premium marketing campaign brief wizard with real-time intelligent scoring and smart gap detection that guides users to create high-quality campaign briefs through structured feedback, actionable recommendations, and contextual quick questions.
+A premium marketing campaign brief wizard with real-time intelligent scoring, smart gap detection, persistent Brand Kit configuration, and AI-powered brand consistency evaluation that guides users to create high-quality, on-brand campaign materials.
 
 **Experience Qualities**:
 1. **Empowering** - Users feel confident and informed as they build their brief, with clear guidance on what will make their campaign stronger
 2. **Intelligent** - System detects critical gaps and asks smart contextual questions before generation
-3. **Non-blocking** - Never prevents generation, but provides clear warnings when results may be generic due to missing data
+3. **Consistent** - Brand voice and guidelines are automatically applied to all generated content, ensuring cohesive messaging
+4. **Non-blocking** - Never prevents generation, but provides clear warnings when results may be generic due to missing data
 
 **Complexity Level**: Light Application (multiple features with basic state)
-This is a guided form wizard with real-time scoring calculations, intelligent gap detection, dynamic question generation, validation logic, and persistent state management through multiple steps.
+This is a guided form wizard with real-time scoring calculations, intelligent gap detection, dynamic question generation, persistent brand kit storage, brand consistency evaluation, validation logic, and persistent state management through multiple steps.
 
 ## Essential Features
+
+### Persistent Brand Kit System
+- **Functionality**: Centralized brand configuration stored per client with 11 customizable parameters that define brand voice, tone, and content guardrails
+- **Purpose**: Ensures all generated campaign content is automatically aligned with the client's brand guidelines without manual intervention
+- **Trigger**: Accessed via "Brand Kit" tab; loaded automatically on app mount; applied to all LLM prompts
+- **Progression**: User defines brand parameters → Saves brand kit → All campaign generations automatically include brand guidelines → Every output block can be evaluated for consistency
+- **Success criteria**: Brand kit persists across sessions; all generated content respects guidelines; evaluation detects violations accurately
+
+#### Brand Kit Parameters:
+1. **Tone** (Select) - 5 options: cercano, profesional, premium, canalla, tech
+2. **Formality** (Slider 1-5) - Numerical scale from very informal to very formal
+3. **Use Emojis** (Toggle) - Yes/No switch
+4. **Emoji Style** (Conditional Select) - pocos, moderados, muchos (shown only if emojis enabled)
+5. **Forbidden Words** (Dynamic List) - Words that must never appear in generated copy
+6. **Preferred Words** (Dynamic List) - Words to use when contextually relevant
+7. **Allowed Claims** (Dynamic List) - Pre-approved claims with evidence/verification
+8. **Not Allowed Claims** (Dynamic List) - Claims to avoid (unverifiable, risky, off-brand)
+9. **Brand Examples YES** (2-3 Text Samples) - Copy that perfectly represents the brand voice
+10. **Brand Examples NO** (2-3 Text Samples) - Copy that does NOT represent the brand voice
+11. **Preferred CTA** (Select) - agenda-demo, compra, descarga, suscribete, contacta
+
+### Brand Consistency Evaluator
+- **Functionality**: AI-powered analysis of any generated content block against saved brand guidelines, producing a 0-100 consistency score with detailed feedback
+- **Purpose**: Validates that generated content adheres to brand voice, tone, formality, emoji usage, word choices, and claim restrictions
+- **Trigger**: "Evaluar Consistencia" button on every output block
+- **Progression**: User clicks button → Modal opens → LLM analyzes content against brand kit → Score calculated → Issues categorized → Recommendations displayed → User reviews feedback
+- **Success criteria**: Detects forbidden words, evaluates tone/formality alignment, checks emoji usage, identifies risky claims, provides actionable improvement suggestions
+
+#### Evaluation Metrics:
+- **Tone Alignment** (0-100%) - How well the content matches the selected brand tone
+- **Formality Alignment** (0-100%) - How well the content matches the formality level
+- **Forbidden Words Found** - Count and list of prohibited words detected
+- **Preferred Words Used** - Count and list of preferred words found
+- **Emoji Usage Status** - correct, missing, excessive, or unnecessary
+- **Claims Issues** - Detection of potentially disallowed claims
+- **Overall Score** (0-100) - Composite score with penalties for errors and warnings
+
+#### Evaluation Display:
+- **Success Issues** (Green CheckCircle) - Strengths detected (e.g., "Great use of preferred words")
+- **Warning Issues** (Orange Warning) - Improvements needed (e.g., "Emoji count not balanced for style")
+- **Error Issues** (Red XCircle) - Violations found (e.g., "Forbidden word detected: barato")
+
+### Brand Guidelines Integration
+- **Functionality**: Automatically injects brand kit parameters into all LLM prompts as structured guidelines
+- **Purpose**: Ensures AI generates on-brand content from the start rather than requiring post-generation editing
+- **Trigger**: Every campaign generation and copy variation generation
+- **Progression**: User initiates generation → Brand kit loaded from storage → Guidelines formatted → Appended to all LLM prompts → Generation proceeds with brand context
+- **Success criteria**: All 11 parameters correctly formatted; guidelines clear and actionable; LLM respects constraints; no brand kit means neutral defaults
 
 ### Smart Gap Detection System
 - **Functionality**: Analyzes the completed brief before generation and detects 8 types of critical gaps that would significantly impact campaign quality
@@ -103,6 +152,14 @@ This is a guided form wizard with real-time scoring calculations, intelligent ga
 ## Edge Case Handling
 
 - **Empty Form on Load** - Shows 0 score with all 8 items missing and recommendations for top 3; no errors thrown
+- **No Brand Kit Configured** - App uses sensible defaults (profesional tone, formality 3, no emojis); generation proceeds normally
+- **Brand Kit with All Fields Empty** - System treats as "no restrictions"; LLM generates freely
+- **Conflicting Brand Guidelines** - (e.g., formal tone + many emojis) System passes both to LLM; evaluation notes inconsistencies
+- **Forbidden and Preferred Words Overlap** - Forbidden takes precedence; evaluation flags the conflict
+- **Brand Consistency Evaluation on Empty Content** - Button disabled when no content available
+- **Evaluation During Active Generation** - Button disabled while isGenerating=true to prevent premature evaluation
+- **Multiple Simultaneous Evaluations** - Each modal operates independently; can evaluate multiple blocks in separate tabs
+- **Emoji Detection Edge Cases** - Uses Unicode regex to catch all emoji ranges including skin tones and combined sequences
 - **All Gaps Present** - Modal shows up to 6 questions; progress bar accurate; can complete all without errors
 - **No Gaps Detected** - Modal never appears; generation proceeds immediately
 - **Skip Optional Questions** - User can skip non-required questions; brief generated with available data
@@ -114,7 +171,7 @@ This is a guided form wizard with real-time scoring calculations, intelligent ga
 - **Partial Multi-Field Criteria** - If only 1 of 2 required fields filled (e.g., product but no price), criterion not met; recommendation explains both requirements
 - **Demo Data Load** - Score jumps to high value immediately; all UI elements update smoothly; no flickering; gap detection works correctly
 - **Rapid Form Changes** - Debouncing not needed as calculations are instant; React batches updates naturally
-- **Language Switch Mid-Session** - Score value preserved; only text changes; modal questions switch language if reopened
+- **Language Switch Mid-Session** - Score value preserved; only text changes; modal questions switch language if reopened; brand kit labels update
 - **Score Exactly 50 or 80** - Uses >= comparison so edge values fall into correct tier (50 = "Casi listo", 80 = "Listo")
 
 ## Design Direction

@@ -4,6 +4,13 @@ Un panel de control integral impulsado por IA para marketers que permite generar
 
 ## 🚀 Características Principales
 
+### Persistent Brand Kit System ✨ NEW
+- **Configuración centralizada de marca** persistente por cliente
+- **11 parámetros personalizables**: tono, formalidad, emojis, palabras prohibidas/preferidas, claims, ejemplos, CTA
+- **Integración automática**: todas las generaciones respetan las directrices de marca
+- **Evaluación de consistencia AI**: botón en cada bloque para validar adherencia al brand kit
+- **Score 0-100** con análisis detallado de alineación de tono, formalidad, uso de palabras y claims
+
 ### Smart Campaign Brief Wizard
 - **Formulario multi-paso intuitivo** para capturar detalles de campaña
 - **Sistema de puntuación en tiempo real (0-100)** que evalúa la calidad del brief
@@ -62,26 +69,63 @@ El sistema detecta 8 tipos de huecos críticos y genera preguntas contextuales:
 ```
 src/
 ├── components/
-│   ├── BriefWizard.tsx        # Wizard multi-paso con scoring
-│   ├── QuickQuestionsModal.tsx # Modal de preguntas inteligentes
-│   ├── BriefScoreCard.tsx     # Tarjeta de puntuación en tiempo real
+│   ├── BriefWizard.tsx           # Wizard multi-paso con scoring
+│   ├── QuickQuestionsModal.tsx   # Modal de preguntas inteligentes
+│   ├── BriefScoreCard.tsx        # Tarjeta de puntuación en tiempo real
+│   ├── BrandKitEditor.tsx        # ✨ Editor de Brand Kit persistente
+│   ├── BrandConsistencyEvaluator.tsx # ✨ Evaluador AI de consistencia
 │   ├── ModularOutputsPanel.tsx
 │   ├── VariationLab.tsx
-│   ├── BrandKitEditor.tsx
 │   ├── WarRoomChat.tsx
 │   ├── Header.tsx
-│   └── ui/                     # Componentes de UI reutilizables (shadcn)
+│   └── ui/                        # Componentes de UI reutilizables (shadcn)
 ├── hooks/
 │   └── use-mobile.ts
 ├── lib/
-│   ├── briefGapDetector.ts    # Lógica de detección de huecos
-│   ├── types.ts               # Tipos TypeScript
-│   ├── i18n.ts                # Traducciones ES/EN
+│   ├── briefGapDetector.ts       # Lógica de detección de huecos
+│   ├── types.ts                  # Tipos TypeScript (incluye BrandKit)
+│   ├── i18n.ts                   # Traducciones ES/EN
 │   └── utils.ts
 ├── styles/
 │   └── theme.css
 └── App.tsx
 ```
+
+## 🎨 Brand Kit: Cómo Funciona
+
+### 1. Configurar Tu Marca
+Ve al tab **"Brand Kit"** y define:
+- **Tono**: cercano, profesional, premium, canalla, o tech
+- **Formalidad**: Slider de 1 (muy informal) a 5 (muy formal)
+- **Emojis**: Activar/desactivar y elegir densidad (pocos/moderados/muchos)
+- **Palabras Prohibidas**: Lista de términos a evitar (ej: barato, gratis, oferta)
+- **Palabras Preferidas**: Vocabulario a priorizar (ej: transformar, innovar, excelencia)
+- **Claims Permitidos**: Afirmaciones verificables aprobadas
+- **Claims NO Permitidos**: Afirmaciones riesgosas o no verificables
+- **Ejemplos YES**: 2-3 textos que SÍ suenan a tu marca
+- **Ejemplos NO**: 2-3 textos que NO representan tu marca
+- **CTA Preferido**: agenda-demo, compra, descarga, suscribete, o contacta
+
+### 2. Generación Automática On-Brand
+Todas las campañas generadas incluyen automáticamente:
+- Tono y formalidad correctos
+- Uso apropiado de emojis
+- Vocabulario alineado con preferencias
+- CTAs según tu configuración
+- Respeto por claims permitidos/prohibidos
+
+### 3. Evaluar Consistencia
+En cada bloque generado (estrategia, email, landing, etc.):
+1. Click en botón **"Evaluar Consistencia"**
+2. AI analiza el contenido vs tu Brand Kit
+3. Obtienes:
+   - **Score 0-100** de consistencia
+   - **Alineación de Tono** (%)
+   - **Alineación de Formalidad** (%)
+   - **Palabras prohibidas detectadas**
+   - **Palabras preferidas usadas**
+   - **Validación de uso de emojis**
+   - **Issues detallados** con recomendaciones
 
 ## 🎯 Cómo Usar el Sistema de Preguntas Rápidas
 

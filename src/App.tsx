@@ -10,11 +10,24 @@ import { VariationLab } from '@/components/VariationLab'
 import { WarRoomChat } from '@/components/WarRoomChat'
 import { FileText, Palette, Sparkle, Lightning } from '@phosphor-icons/react'
 import type { Language } from '@/lib/i18n'
-import type { CampaignBriefData, CampaignOutput, CopyVariation } from '@/lib/types'
+import type { CampaignBriefData, CampaignOutput, CopyVariation, BrandKit } from '@/lib/types'
 
 function App() {
   const [theme, setTheme] = useKV<string>('theme', 'light')
   const [language, setLanguage] = useKV<Language>('language', 'es')
+  const [brandKit] = useKV<BrandKit>('brand-kit-v2', {
+    tone: 'profesional',
+    formality: 3,
+    useEmojis: false,
+    emojiStyle: 'moderados',
+    forbiddenWords: [],
+    preferredWords: [],
+    allowedClaims: [],
+    notAllowedClaims: [],
+    brandExamplesYes: [],
+    brandExamplesNo: [],
+    preferredCTA: 'contacta'
+  })
   const [isConnected, setIsConnected] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [outputs, setOutputs] = useKV<Partial<CampaignOutput>>('campaign-outputs-v2', {})
@@ -54,9 +67,27 @@ function App() {
     try {
       const lang = language || 'en'
       const isSpanish = lang === 'es'
+      const kit = brandKit!
+      
+      const brandGuidelines = `
+
+BRAND GUIDELINES (APLICA A TODO EL COPY GENERADO):
+- Tono: ${kit.tone}
+- Nivel de Formalidad: ${kit.formality}/5 (1=muy informal, 5=muy formal)
+- Emojis: ${kit.useEmojis ? `Sí, usar estilo ${kit.emojiStyle}` : 'No usar emojis'}
+${kit.forbiddenWords.length > 0 ? `- Palabras PROHIBIDAS (nunca usar): ${kit.forbiddenWords.join(', ')}` : ''}
+${kit.preferredWords.length > 0 ? `- Palabras PREFERIDAS (usar cuando sea relevante): ${kit.preferredWords.join(', ')}` : ''}
+${kit.allowedClaims.length > 0 ? `- Claims PERMITIDOS: ${kit.allowedClaims.join(' | ')}` : ''}
+${kit.notAllowedClaims.length > 0 ? `- Claims NO PERMITIDOS (evitar): ${kit.notAllowedClaims.join(' | ')}` : ''}
+- CTA Preferido: ${kit.preferredCTA}
+${kit.brandExamplesYes.length > 0 ? `\nEjemplos de copy que SÍ representa nuestra marca:\n${kit.brandExamplesYes.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}` : ''}
+${kit.brandExamplesNo.length > 0 ? `\nEjemplos de copy que NO representa nuestra marca:\n${kit.brandExamplesNo.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}` : ''}
+
+IMPORTANTE: Todo el copy debe seguir estas directrices de marca.`
       
       // @ts-expect-error - spark global is provided by runtime
       const strategyPrompt = spark.llmPrompt`${isSpanish ? 'Eres un estratega de marketing premium. Crea una estrategia integral para esta campaña:' : 'You are a premium marketing strategist. Create a comprehensive strategy for this campaign:'}
+${brandGuidelines}
 
 Producto: ${briefData.product}
 Audiencia: ${briefData.audience}
@@ -70,6 +101,7 @@ ${isSpanish ? 'Incluye: Visión general, posicionamiento, enfoque de audiencia, 
 
       // @ts-expect-error - spark global is provided by runtime
       const creativeRoutesPrompt = spark.llmPrompt`${isSpanish ? 'Eres un director creativo. Proporciona 4 rutas creativas distintas (ángulos) para esta campaña:' : 'You are a creative director. Provide 4 distinct creative routes (angles) for this campaign:'}
+${brandGuidelines}
 
 Producto: ${briefData.product}
 Promesa: ${briefData.mainPromise || 'TBD'}
@@ -79,6 +111,7 @@ ${isSpanish ? 'Para cada ruta incluye: Nombre del ángulo, concepto central, ton
 
       // @ts-expect-error - spark global is provided by runtime
       const funnelPrompt = spark.llmPrompt`${isSpanish ? 'Eres un experto en funnels. Crea un blueprint del funnel completo:' : 'You are a funnel expert. Create a complete funnel blueprint:'}
+${brandGuidelines}
 
 Producto: ${briefData.product}
 Objetivos: ${briefData.goals}
@@ -88,6 +121,7 @@ ${isSpanish ? 'Mapea cada etapa: Awareness → Consideration → Conversion → 
 
       // @ts-expect-error - spark global is provided by runtime
       const paidPackPrompt = spark.llmPrompt`${isSpanish ? 'Eres un especialista en paid media. Crea un pack completo de campañas pagadas:' : 'You are a paid media specialist. Create a complete paid campaigns pack:'}
+${brandGuidelines}
 
 Producto: ${briefData.product}
 Presupuesto: ${briefData.budget}
@@ -97,6 +131,7 @@ ${isSpanish ? 'Incluye: Estructura de campañas, segmentación, ad copy (3 varia
 
       // @ts-expect-error - spark global is provided by runtime
       const landingKitPrompt = spark.llmPrompt`${isSpanish ? 'Eres un experto en landing pages. Crea un kit completo para landing:' : 'You are a landing page expert. Create a complete landing kit:'}
+${brandGuidelines}
 
 Producto: ${briefData.product}
 Promesa: ${briefData.mainPromise || 'TBD'}
@@ -106,6 +141,7 @@ ${isSpanish ? 'Incluye: Estructura (hero, beneficios, prueba social, CTA), copy 
 
       // @ts-expect-error - spark global is provided by runtime
       const emailFlowPrompt = spark.llmPrompt`${isSpanish ? 'Diseña un flow automatizado de 5 emails para nutrir leads:' : 'Design an automated 5-email flow to nurture leads:'}
+${brandGuidelines}
 
 Producto: ${briefData.product}
 Objetivo: ${briefData.goals}
@@ -114,6 +150,7 @@ ${isSpanish ? 'Para cada email: Subject line, preview text, cuerpo (3-4 párrafo
 
       // @ts-expect-error - spark global is provided by runtime
       const whatsappFlowPrompt = spark.llmPrompt`${isSpanish ? 'Diseña un flow de WhatsApp automatizado de 4 mensajes:' : 'Design an automated WhatsApp flow of 4 messages:'}
+${brandGuidelines}
 
 Producto: ${briefData.product}
 Tono: conversacional, profesional
@@ -122,6 +159,7 @@ ${isSpanish ? 'Para cada mensaje: texto breve (max 2-3 oraciones), emojis apropi
 
       // @ts-expect-error - spark global is provided by runtime
       const experimentPlanPrompt = spark.llmPrompt`${isSpanish ? 'Crea un plan de experimentos A/B para optimizar esta campaña:' : 'Create an A/B experiment plan to optimize this campaign:'}
+${brandGuidelines}
 
 Objetivos: ${briefData.goals}
 Presupuesto: ${briefData.budget}
@@ -154,6 +192,7 @@ ${isSpanish ? 'Organiza por fases: Pre-lanzamiento, Lanzamiento, Post-lanzamient
 
       // @ts-expect-error - spark global is provided by runtime
       const variationsPrompt = spark.llmPrompt`${isSpanish ? 'Genera 15 variaciones de copy etiquetadas por ángulo estratégico. Devuelve JSON.' : 'Generate 15 copy variations labeled by strategic angle. Return JSON.'}
+${brandGuidelines}
 
 Producto: ${briefData.product}
 Promesa: ${briefData.mainPromise || briefData.goals}

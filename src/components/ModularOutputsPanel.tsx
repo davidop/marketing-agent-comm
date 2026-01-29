@@ -12,6 +12,7 @@ import {
 } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { BrandConsistencyEvaluator } from '@/components/BrandConsistencyEvaluator'
 import type { CampaignOutput } from '@/lib/types'
 
 interface ModularOutputsPanelProps {
@@ -53,6 +54,11 @@ function OutputBlock({ title, icon, content, isLoading, emptyMessage, onRegenera
         <div className="flex items-center gap-2">
           {content && (
             <>
+              <BrandConsistencyEvaluator
+                content={content}
+                blockName={title}
+                language={language}
+              />
               <Button
                 variant="ghost"
                 size="sm"
