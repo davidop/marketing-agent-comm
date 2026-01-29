@@ -1,18 +1,18 @@
 import React from "react";
-import { Card } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/c
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 
 interface BriefScoreCardProps {
-  score: number;
+  statusText?: s
   missing?: string[];
   recommendations?: string[];
   statusText?: string;
-}
+ 
 
 export default function BriefScoreCard({
   score,
-  missing = [],
+    <Card class
   recommendations = [],
   statusText = "Listo para generar"
 }: BriefScoreCardProps) {
@@ -34,7 +34,7 @@ export default function BriefScoreCard({
             {missing.map((item, idx) => (
               <li key={idx}>{item}</li>
             ))}
-          </ul>
+    </Card>
         </div>
       )}
 
@@ -42,16 +42,16 @@ export default function BriefScoreCard({
         <div className="space-y-1">
           <p className="text-sm font-semibold">Cómo mejorarlo</p>
           <ul className="list-disc pl-5 text-sm space-y-1">
-            {recommendations.map((tip, idx) => (
+
               <li key={idx}>{tip}</li>
-            ))}
+
           </ul>
-        </div>
+
       )}
 
       <Alert>
         <AlertDescription className="text-sm">{statusText}</AlertDescription>
       </Alert>
-    </Card>
+
   );
 }
