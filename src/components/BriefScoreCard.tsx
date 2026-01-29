@@ -3,11 +3,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
-interface BriefScoreCardProps {
-  score: number;
   missing?: string[];
-  recommendations?: string[];
-  statusText?: string;
+  statusText?: s
+
+  score,
+  recommendations = []
 }
 
 export default function BriefScoreCard({
@@ -18,40 +18,40 @@ export default function BriefScoreCard({
 }: BriefScoreCardProps) {
   const safeScore = Math.max(0, Math.min(100, Number.isFinite(score) ? score : 0))
 
-  return (
-    <Card className="p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Brief Score</h3>
-        <span className="text-sm font-medium">{safeScore}/100</span>
-      </div>
-
-      <Progress value={safeScore} />
-
+      <Pro
       {missing.length > 0 && (
-        <div className="space-y-1">
-          <p className="text-sm font-semibold">Qué falta</p>
-          <ul className="list-disc pl-5 text-sm space-y-1">
+          <p className="text-sm font-semibold">Qué falta<
             {missing.map((item, idx) => (
-              <li key={idx}>{item}</li>
             ))}
-          </ul>
-        </div>
-      )}
+        </di
 
-      {recommendations.length > 0 && (
         <div className="space-y-1">
-          <p className="text-sm font-semibold">Cómo mejorarlo</p>
-          <ul className="list-disc pl-5 text-sm space-y-1">
-            {recommendations.map((tip, idx) => (
-              <li key={idx}>{tip}</li>
-            ))}
+
+              <li key={idx}>{t
           </ul>
-        </div>
+      )}
+      <Alert>
+      </Alert>
+  )
+            ))}
+
+
+
+
+
+        <div className="space-y-1">
+
+
+
+              <li key={idx}>{tip}</li>
+
+          </ul>
+
       )}
 
-      <Alert>
-        <AlertDescription className="text-sm">{statusText}</AlertDescription>
+
+
       </Alert>
-    </Card>
-  )
-}
+
+
+
