@@ -13,7 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Lightning, CaretDown, Check, CheckCircle, ArrowRight, ArrowLeft, Info, Sparkle } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
-import { BriefScoreCard } from '@/components/BriefScoreCard'
+import BriefScoreCard from '@/components/BriefScoreCard'
 import type { CampaignBriefData } from '@/lib/types'
 
 interface BriefWizardProps {
