@@ -66,6 +66,15 @@ export interface CopyVariation {
   risk: 'bajo' | 'medio' | 'alto'
   riskReason: string
   tone?: 'cercano' | 'profesional' | 'premium' | 'canalla' | 'tech'
+  isFavorite?: boolean
+  scoring?: {
+    total: number
+    clarity: number
+    specificity: number
+    differentiation: number
+    audienceFit: number
+    brandVoiceFit: number
+  }
 }
 
 export interface ContentCalendarItem {
