@@ -249,6 +249,27 @@ export interface MeasurementUtmsData {
   }>
 }
 
+export interface RisksAssumptionsData {
+  assumptions: string[]
+  risks: Array<{
+    description: string
+    impact: 'alto' | 'medio' | 'bajo'
+    probability: 'alta' | 'media' | 'baja'
+    reasoning?: string
+  }>
+  mitigations: Array<{
+    risk: string
+    action: string
+    priority?: 'alta' | 'media' | 'baja'
+  }>
+  tbds: Array<{
+    item: string
+    why?: string
+    suggestion?: string
+  }>
+  recommendations?: string[]
+}
+
 export interface CampaignOutput {
   overview?: {
     objective: string
@@ -275,7 +296,7 @@ export interface CampaignOutput {
   flows?: FlowSequence[]
   experimentPlan: string
   measurementUtms: string | MeasurementUtmsData
-  risks: string
+  risks: string | RisksAssumptionsData
   executionChecklist: string
 }
 

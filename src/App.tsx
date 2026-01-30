@@ -820,13 +820,90 @@ ${isSpanish ? 'IMPORTANTE:' : 'IMPORTANT:'}
 ${isSpanish ? 'Devuelve SOLO el JSON válido con el formato exacto indicado. No añadas texto adicional fuera del JSON.' : 'Return ONLY the valid JSON with the exact format indicated. Do not add additional text outside the JSON.'}`
 
       // @ts-expect-error - spark global is provided by runtime
-      const risksPrompt = spark.llmPrompt`${isSpanish ? 'Identifica riesgos y supuestos críticos de esta campaña:' : 'Identify critical risks and assumptions for this campaign:'}
+      const risksPrompt = spark.llmPrompt`${isSpanish ? 'Crea un análisis completo de riesgos y supuestos en formato JSON estructurado.' : 'Create a complete risk and assumptions analysis in structured JSON format.'}
+${brandGuidelines}
 
 Producto: ${briefData.product}
+Audiencia: ${briefData.audience}
 Presupuesto: ${briefData.budget}
 Objetivos: ${briefData.goals}
+Canales: ${briefData.channels.join(', ')}
+${briefData.price ? `Precio: ${briefData.price}` : ''}
+${briefData.mainPromise ? `Promesa Principal: ${briefData.mainPromise}` : ''}
+${briefData.proof ? `Pruebas: ${briefData.proof.join(', ')}` : ''}
 
-${isSpanish ? 'Lista 5-6 riesgos principales con: descripción, impacto (alto/medio/bajo), probabilidad, y plan de mitigación. También lista supuestos clave.' : 'List 5-6 main risks with: description, impact (high/medium/low), probability, and mitigation plan. Also list key assumptions.'}`
+${isSpanish ? 'Devuelve un objeto JSON con esta estructura EXACTA:' : 'Return a JSON object with this EXACT structure:'}
+
+{
+  "assumptions": [
+    "${isSpanish ? '(Supuesto 1: qué estás asumiendo del brief o del contexto)' : '(Assumption 1: what you are assuming from the brief or context)'}",
+    "${isSpanish ? '(Supuesto 2)' : '(Assumption 2)'}",
+    "${isSpanish ? '(Supuesto 3)' : '(Assumption 3)'}",
+    "${isSpanish ? '(Supuesto 4)' : '(Assumption 4)'}",
+    "${isSpanish ? '(Supuesto 5)' : '(Assumption 5)'}"
+  ],
+  "risks": [
+    {
+      "description": "${isSpanish ? '(Descripción clara del riesgo #1: qué podría salir mal)' : '(Clear description of risk #1: what could go wrong)'}",
+      "impact": "alto" | "medio" | "bajo",
+      "probability": "alta" | "media" | "baja",
+      "reasoning": "${isSpanish ? '(Por qué este riesgo existe: contexto, factores que lo causan)' : '(Why this risk exists: context, factors causing it)'}"
+    },
+    {
+      "description": "${isSpanish ? '(Riesgo #2)' : '(Risk #2)'}",
+      "impact": "alto" | "medio" | "bajo",
+      "probability": "alta" | "media" | "baja",
+      "reasoning": "${isSpanish ? '(Por qué)' : '(Why)'}"
+    },
+    "${isSpanish ? '...incluir 5-7 riesgos en total' : '...include 5-7 risks in total'}"
+  ],
+  "mitigations": [
+    {
+      "risk": "${isSpanish ? '(Nombre corto del riesgo que se mitiga)' : '(Short name of the risk being mitigated)'}",
+      "action": "${isSpanish ? '(Acción concreta para reducir o eliminar el riesgo: qué hacer específicamente)' : '(Concrete action to reduce or eliminate risk: what specifically to do)'}",
+      "priority": "alta" | "media" | "baja"
+    },
+    "${isSpanish ? '...incluir una mitigación por cada riesgo identificado' : '...include one mitigation per identified risk'}"
+  ],
+  "tbds": [
+    {
+      "item": "${isSpanish ? '(Dato o información específica que falta, ej: Precio del producto)' : '(Specific missing data or information, e.g.: Product price)'}",
+      "why": "${isSpanish ? '(Por qué es importante tener este dato: impacto en la campaña)' : '(Why this data is important: campaign impact)'}",
+      "suggestion": "${isSpanish ? '(Sugerencia de cómo obtenerlo o qué asumir mientras tanto)' : '(Suggestion of how to obtain it or what to assume meanwhile)'}"
+    },
+    "${isSpanish ? '...incluir 3-6 TBDs relevantes' : '...include 3-6 relevant TBDs'}"
+  ],
+  "recommendations": [
+    "${isSpanish ? '(Recomendación general #1 para aumentar probabilidad de éxito)' : '(General recommendation #1 to increase success probability)'}",
+    "${isSpanish ? '(Recomendación #2)' : '(Recommendation #2)'}",
+    "${isSpanish ? '(Recomendación #3)' : '(Recommendation #3)'}",
+    "${isSpanish ? '(Recomendación #4)' : '(Recommendation #4)'}",
+    "${isSpanish ? '(Recomendación #5)' : '(Recommendation #5)'}"
+  ]
+}
+
+${isSpanish ? 'Ejemplos de supuestos:' : 'Examples of assumptions:'}
+- ${isSpanish ? 'Asumimos que el público objetivo tiene acceso a redes sociales' : 'We assume target audience has social media access'}
+- ${isSpanish ? 'Asumimos que el producto tiene stock suficiente para demanda generada' : 'We assume product has sufficient stock for generated demand'}
+- ${isSpanish ? 'Asumimos que el precio es competitivo vs. alternativas' : 'We assume price is competitive vs. alternatives'}
+
+${isSpanish ? 'Ejemplos de riesgos:' : 'Examples of risks:'}
+- ${isSpanish ? 'El presupuesto puede ser insuficiente para alcanzar el CPL objetivo en canales paid' : 'Budget may be insufficient to reach target CPL in paid channels'}
+- ${isSpanish ? 'La audiencia podría ser demasiado amplia, diluyendo el mensaje' : 'Audience might be too broad, diluting the message'}
+- ${isSpanish ? 'Sin prueba social, la conversión puede ser baja' : 'Without social proof, conversion may be low'}
+
+${isSpanish ? 'Ejemplos de TBDs:' : 'Examples of TBDs:'}
+- ${isSpanish ? 'Precio del producto no definido → Impacta copy, oferta y targeting' : 'Product price not defined → Impacts copy, offer and targeting'}
+- ${isSpanish ? 'No hay testimonios o casos de éxito → Limita credibilidad en landing' : 'No testimonials or success cases → Limits landing credibility'}
+- ${isSpanish ? 'ROI esperado o margen no especificado → Dificulta optimización de CPA' : 'Expected ROI or margin not specified → Hinders CPA optimization'}
+
+${isSpanish ? 'IMPORTANTE:' : 'IMPORTANT:'}
+- ${isSpanish ? 'Sé realista y específico. No inventes riesgos genéricos.' : 'Be realistic and specific. Do not invent generic risks.'}
+- ${isSpanish ? 'Los riesgos deben estar basados en el brief y en el contexto real.' : 'Risks must be based on the brief and real context.'}
+- ${isSpanish ? 'Las mitigaciones deben ser accionables, no teóricas.' : 'Mitigations must be actionable, not theoretical.'}
+- ${isSpanish ? 'Los TBDs deben señalar huecos reales de información.' : 'TBDs must point to real information gaps.'}
+
+${isSpanish ? 'Devuelve SOLO el JSON válido con el formato exacto indicado. No añadas texto adicional fuera del JSON.' : 'Return ONLY the valid JSON with the exact format indicated. Do not add additional text outside the JSON.'}`
 
       // @ts-expect-error - spark global is provided by runtime
       const checklistPrompt = spark.llmPrompt`${isSpanish ? 'Crea un checklist ejecutivo paso a paso para lanzar esta campaña:' : 'Create a step-by-step executive checklist to launch this campaign:'}
@@ -869,7 +946,7 @@ ${isSpanish ? 'Devuelve un objeto JSON con una propiedad "variations" que conten
         flowWinbackJson,
         experimentPlan,
         measurementUtmsJson,
-        risks,
+        risksJson,
         executionChecklist,
         variationsJson
       ] = await Promise.all([
@@ -886,7 +963,7 @@ ${isSpanish ? 'Devuelve un objeto JSON con una propiedad "variations" que conten
         spark.llm(flowWinbackPrompt, 'gpt-4o', true),
         spark.llm(experimentPlanPrompt),
         spark.llm(measurementUtmsPrompt, 'gpt-4o', true),
-        spark.llm(risksPrompt),
+        spark.llm(risksPrompt, 'gpt-4o', true),
         spark.llm(checklistPrompt),
         spark.llm(variationsPrompt, 'gpt-4o', true)
       ])
@@ -1019,6 +1096,17 @@ ${isSpanish ? 'Devuelve un objeto JSON con una propiedad "variations" que conten
       } catch (e) {
         console.error('Failed to parse measurement UTMs JSON, using text fallback', e)
         parsedMeasurementUtms = measurementUtmsJson
+      }
+
+      let parsedRisks: any = risksJson
+      try {
+        const parsed = JSON.parse(risksJson)
+        if (parsed.assumptions && parsed.risks && parsed.mitigations && parsed.tbds) {
+          parsedRisks = parsed
+        }
+      } catch (e) {
+        console.error('Failed to parse risks JSON, using text fallback', e)
+        parsedRisks = risksJson
       }
 
       const parseOverview = (text: string) => {
@@ -1169,7 +1257,7 @@ ${isSpanish ? 'Devuelve un objeto JSON con una propiedad "variations" que conten
         flows: flowSequences.length > 0 ? flowSequences : undefined,
         experimentPlan,
         measurementUtms: parsedMeasurementUtms,
-        risks,
+        risks: parsedRisks,
         executionChecklist
       }))
 

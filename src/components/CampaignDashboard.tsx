@@ -12,6 +12,7 @@ import { PaidPack } from '@/components/PaidPack'
 import LandingKitDisplay from '@/components/LandingKitDisplay'
 import FlowsDisplay from '@/components/FlowsDisplay'
 import MeasurementUtmsDisplay from '@/components/MeasurementUtmsDisplay'
+import { RisksAssumptionsDisplay } from '@/components/RisksAssumptionsDisplay'
 import { 
   Eye,
   Target,
@@ -26,7 +27,7 @@ import {
   Warning,
   CheckSquare
 } from '@phosphor-icons/react'
-import type { CampaignOutput, ContentCalendarItem, CreativeRoute, FunnelPhase, PaidPackData, LandingKitData, FlowSequence } from '@/lib/types'
+import type { CampaignOutput, ContentCalendarItem, CreativeRoute, FunnelPhase, PaidPackData, LandingKitData, FlowSequence, RisksAssumptionsData } from '@/lib/types'
 
 interface CampaignDashboardProps {
   outputs: Partial<CampaignOutput>
@@ -369,17 +370,25 @@ export function CampaignDashboard({
         </TabsContent>
 
         <TabsContent value="risks" className="mt-0">
-          <OutputCard
-            title={t('Riesgos y Supuestos', 'Risks & Assumptions')}
-            icon={<Warning size={20} weight="fill" />}
-            content={outputs.risks || ''}
-            isLoading={isGenerating}
-            emptyMessage={t('Los riesgos se generarán aquí', 'Risks will be generated here')}
-            language={language}
-            onRegenerate={() => onRegenerateBlock?.('risks')}
-            onSaveVersion={(content) => handleSaveVersion('risks', content)}
-            blockName="risks"
-          />
+          {typeof outputs.risks === 'object' && outputs.risks !== null ? (
+            <RisksAssumptionsDisplay
+              data={outputs.risks as RisksAssumptionsData}
+              language={language}
+              isLoading={isGenerating}
+            />
+          ) : (
+            <OutputCard
+              title={t('Riesgos y Supuestos', 'Risks & Assumptions')}
+              icon={<Warning size={20} weight="fill" />}
+              content={outputs.risks || ''}
+              isLoading={isGenerating}
+              emptyMessage={t('Los riesgos se generarán aquí', 'Risks will be generated here')}
+              language={language}
+              onRegenerate={() => onRegenerateBlock?.('risks')}
+              onSaveVersion={(content) => handleSaveVersion('risks', content)}
+              blockName="risks"
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="checklist" className="mt-0">

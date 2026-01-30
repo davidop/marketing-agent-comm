@@ -256,7 +256,7 @@ export function ModularOutputsPanel({ outputs, isGenerating, language, onRegener
             <OutputBlock
               title={language === 'es' ? 'Riesgos y Supuestos' : 'Risks & Assumptions'}
               icon={<Warning size={20} weight="fill" className="text-destructive" />}
-              content={outputs.risks || ''}
+              content={typeof outputs.risks === 'string' ? outputs.risks : ''}
               isLoading={isGenerating}
               emptyMessage={language === 'es' ? 'Identificación de riesgos y supuestos' : 'Risk and assumptions identification'}
               onRegenerate={() => onRegenerateBlock?.('risks')}
