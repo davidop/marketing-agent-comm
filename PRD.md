@@ -1,4 +1,4 @@
-# Marketing Agent Command Center - Strategic Campaign System
+# Campaign Impact Hub - Strategic Campaign System
 
 Un sistema premium de planificación y ejecución de campañas de marketing digital orientado a **performance y brand**, que convierte briefs en campañas ejecutables, específicas y coherentes con la marca. Diseñado desde la perspectiva de una estratega senior de marketing digital.
 

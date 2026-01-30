@@ -1,7 +1,7 @@
 export const translations = {
   en: {
     header: {
-      title: 'Marketing Command Center',
+      title: 'Campaign Impact Hub',
       connected: 'Connected',
       disconnected: 'Disconnected'
     },
@@ -44,7 +44,7 @@ export const translations = {
   },
   es: {
     header: {
-      title: 'Centro de Comando Marketing',
+      title: 'Campaign Impact Hub',
       connected: 'Conectado',
       disconnected: 'Desconectado'
     },

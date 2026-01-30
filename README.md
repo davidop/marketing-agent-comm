@@ -1,4 +1,4 @@
-# Marketing Agent Command Center
+# Campaign Impact Hub
 
 **Sistema de planificación estratégica de campañas de marketing digital orientado a performance y brand.**
 
@@ -16,6 +16,10 @@ Diseñado desde la perspectiva de una estratega senior de marketing, este sistem
 > **Documentación estratégica completa**: Ver [STRATEGIC_APPROACH.md](./STRATEGIC_APPROACH.md) para ejemplos detallados y mejores prácticas.
 
 ## 🚀 Características Principales
+
+### Campaign Impact Hub - Tu Centro de Control de Campañas
+
+Campaign Impact Hub es tu plataforma estratégica para crear campañas ejecutables, específicas y coherentes con tu marca. No genera texto bonito, genera planes accionables con KPIs claros y next steps concretos.
 
 ### Persistent Brand Kit System ✨ NEW
 - **Configuración centralizada de marca** persistente por cliente
