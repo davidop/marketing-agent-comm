@@ -10,6 +10,7 @@ import { CreativeRoutesDisplay } from '@/components/CreativeRoutesDisplay'
 import FunnelBlueprint from '@/components/FunnelBlueprint'
 import { PaidPack } from '@/components/PaidPack'
 import LandingKitDisplay from '@/components/LandingKitDisplay'
+import { ContentCalendarDisplay } from '@/components/ContentCalendarDisplay'
 import FlowsDisplay from '@/components/FlowsDisplay'
 import MeasurementUtmsDisplay from '@/components/MeasurementUtmsDisplay'
 import { RisksAssumptionsDisplay } from '@/components/RisksAssumptionsDisplay'
@@ -241,66 +242,10 @@ export function CampaignDashboard({
         </TabsContent>
 
         <TabsContent value="calendar" className="mt-0">
-          <Card className="glass-panel p-6 border-2">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                <CalendarBlank size={24} weight="fill" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold">
-                  {t('Calendario de Contenidos', 'Content Calendar')}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {t('Plan de publicaciones y contenido', 'Content and publishing plan')}
-                </p>
-              </div>
-            </div>
-
-            {isGenerating ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-20 bg-muted/50 animate-pulse rounded-lg" />
-                ))}
-              </div>
-            ) : !outputs.contentCalendar || outputs.contentCalendar.length === 0 ? (
-              <p className="text-muted-foreground text-sm italic py-8 text-center">
-                {t('El calendario se generará aquí', 'Calendar will be generated here')}
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {outputs.contentCalendar.map((item, idx) => (
-                  <Card key={idx} className="p-4 border-2 hover:border-primary/40 transition-colors">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="outline">{item.date}</Badge>
-                          <Badge>{item.platform}</Badge>
-                          <Badge variant="secondary" className="text-xs">
-                            {item.funnelPhase}
-                          </Badge>
-                        </div>
-                        <h3 className="font-bold text-sm mb-1">{item.contentType}</h3>
-                        <p className="text-sm text-muted-foreground mb-2">{item.description}</p>
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="text-muted-foreground">
-                            {t('Objetivo:', 'Objective:')} <span className="font-medium">{item.objective}</span>
-                          </span>
-                          <span className="text-muted-foreground">•</span>
-                          <span className="text-muted-foreground">
-                            {t('CTA:', 'CTA:')} <span className="font-medium">{item.cta}</span>
-                          </span>
-                          <span className="text-muted-foreground">•</span>
-                          <span className="text-muted-foreground">
-                            {t('Formato:', 'Format:')} <span className="font-medium">{item.format}</span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </Card>
+          <ContentCalendarDisplay 
+            items={outputs.contentCalendar || []} 
+            language={language}
+          />
         </TabsContent>
 
         <TabsContent value="flows" className="mt-0">

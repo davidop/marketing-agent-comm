@@ -16,6 +16,7 @@ import { BrandConsistencyEvaluator } from '@/components/BrandConsistencyEvaluato
 import { CreativeRoutesDisplay } from '@/components/CreativeRoutesDisplay'
 import FunnelBlueprint from '@/components/FunnelBlueprint'
 import LandingKitDisplay from '@/components/LandingKitDisplay'
+import { ContentCalendarDisplay } from '@/components/ContentCalendarDisplay'
 import MeasurementUtmsDisplay from '@/components/MeasurementUtmsDisplay'
 import ExecutionChecklistDisplay from '@/components/ExecutionChecklistDisplay'
 import type { CampaignOutput, CreativeRoute, FunnelPhase, LandingKitData, MeasurementUtmsData, ExecutionChecklistData } from '@/lib/types'
@@ -153,16 +154,18 @@ export function ModularOutputsPanel({ outputs, isGenerating, language, onRegener
       return
     }
 
-    const headers = ['Date', 'Platform', 'Content Type', 'Objective', 'Funnel Phase', 'CTA', 'Format', 'Description']
+    const headers = ['Date', 'Canal', 'Formato', 'Objetivo', 'Funnel Phase', 'CTA', 'Idea Visual', 'Copy Base', 'KPI Sugerido', 'Categoria']
     const rows = outputs.contentCalendar.map(item => [
       item.date,
-      item.platform,
-      item.contentType,
-      item.objective,
+      item.canal,
+      item.formato,
+      item.objetivo,
       item.funnelPhase,
       item.cta,
-      item.format,
-      item.description
+      item.ideaVisual,
+      item.copyBase,
+      item.kpiSugerido,
+      item.categoria
     ])
 
     const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n')
@@ -382,54 +385,10 @@ export function ModularOutputsPanel({ outputs, isGenerating, language, onRegener
         <TabsContent value="content" className="mt-0">
           <div className="grid grid-cols-1 gap-4">
             {outputs.contentCalendar && outputs.contentCalendar.length > 0 ? (
-              <Card className="glass-panel p-5 border-2">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <Calendar size={20} weight="fill" className="text-primary" />
-                    <h3 className="text-sm font-bold uppercase tracking-wider">
-                      {language === 'es' ? 'Calendario de Contenido' : 'Content Calendar'}
-                    </h3>
-                  </div>
-                  <Badge variant="secondary" className="text-xs">
-                    {outputs.contentCalendar.length} {language === 'es' ? 'piezas' : 'pieces'}
-                  </Badge>
-                </div>
-                <ScrollArea className="h-[500px]">
-                  <div className="space-y-3 pr-4">
-                    {outputs.contentCalendar.map((item, idx) => (
-                      <Card key={idx} className="glass-panel p-4 border-2 hover:scale-[1.02] transition-transform">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Badge variant="outline" className="text-xs">{item.date}</Badge>
-                              <Badge variant="secondary" className="text-xs">{item.platform}</Badge>
-                            </div>
-                            <p className="text-sm font-bold text-foreground">{item.contentType}</p>
-                          </div>
-                          <Badge className={cn(
-                            "text-xs",
-                            item.funnelPhase === 'awareness' && "bg-primary",
-                            item.funnelPhase === 'consideration' && "bg-accent",
-                            item.funnelPhase === 'conversion' && "bg-success",
-                            item.funnelPhase === 'retention' && "bg-secondary"
-                          )}>
-                            {item.funnelPhase}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground mb-2">{item.description}</p>
-                        <div className="flex items-center gap-2 text-xs">
-                          <Target size={14} weight="fill" className="text-primary" />
-                          <span className="font-medium">{item.objective}</span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className="text-xs">{item.format}</Badge>
-                          <span className="text-xs text-muted-foreground">CTA: {item.cta}</span>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </Card>
+              <ContentCalendarDisplay 
+                items={outputs.contentCalendar} 
+                language={language}
+              />
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 <Calendar size={56} className="mx-auto mb-4 opacity-40 float-animate" />

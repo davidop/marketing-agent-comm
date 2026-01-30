@@ -77,15 +77,21 @@ export interface CopyVariation {
   }
 }
 
+export type ContentFormat = 'post' | 'carrusel' | 'reel' | 'story' | 'email' | 'video' | 'article' | 'pdf' | 'infografia' | 'webinar'
+
+export type ContentCategory = 'educacion' | 'prueba-social' | 'venta' | 'comunidad'
+
 export interface ContentCalendarItem {
   date: string
-  platform: string
-  contentType: string
-  objective: string
+  canal: string
+  formato: ContentFormat
   funnelPhase: 'awareness' | 'consideration' | 'conversion' | 'retention'
+  objetivo: string
   cta: string
-  format: string
-  description: string
+  ideaVisual: string
+  copyBase: string
+  kpiSugerido: string
+  categoria: ContentCategory
 }
 
 export interface CreativeRoute {

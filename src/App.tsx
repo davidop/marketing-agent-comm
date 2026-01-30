@@ -10,7 +10,7 @@ import { VariationLab } from '@/components/VariationLab'
 import { WarRoomChat } from '@/components/WarRoomChat'
 import { FileText, Palette, Sparkle, Lightning } from '@phosphor-icons/react'
 import type { Language } from '@/lib/i18n'
-import type { CampaignBriefData, CampaignOutput, CopyVariation, BrandKit, FlowSequence } from '@/lib/types'
+import type { CampaignBriefData, CampaignOutput, CopyVariation, BrandKit, FlowSequence, ContentCalendarItem } from '@/lib/types'
 
 function App() {
   const [theme, setTheme] = useKV<string>('theme', 'light')
@@ -1020,6 +1020,61 @@ ${isSpanish ? 'Ejemplo de IDs: "pre-1", "pre-2", "setup-1", "creative-1", "launc
 ${isSpanish ? 'Devuelve SOLO el JSON válido con el formato exacto indicado. No añadas texto adicional fuera del JSON.' : 'Return ONLY the valid JSON with the exact format indicated. Do not add additional text outside the JSON.'}`
 
       // @ts-expect-error - spark global is provided by runtime
+      const contentCalendarPrompt = spark.llmPrompt`${isSpanish ? 'Crea un calendario de contenido para 3 semanas (15 piezas) con toda la información detallada. Devuelve JSON.' : 'Create a content calendar for 3 weeks (15 pieces) with all detailed information. Return JSON.'}
+${brandGuidelines}
+
+Producto: ${briefData.product}
+Audiencia: ${briefData.audience}
+Objetivos: ${briefData.goals}
+Canales: ${briefData.channels.join(', ')}
+Promesa: ${briefData.mainPromise || 'TBD'}
+
+${isSpanish ? 'Devuelve un objeto JSON con una propiedad "items" que contenga un array de 15 objetos.' : 'Return a JSON object with an "items" property containing an array of 15 objects.'}
+
+${isSpanish ? 'Para CADA pieza de contenido incluye EXACTAMENTE estas propiedades:' : 'For EACH content piece include EXACTLY these properties:'}
+
+{
+  "date": "${isSpanish ? '(Fecha: Semana 1 Día 1, Semana 1 Día 3, etc.)' : '(Date: Week 1 Day 1, Week 1 Day 3, etc.)'}",
+  "canal": "${isSpanish ? '(Canal de los disponibles: Email, Instagram, LinkedIn, etc.)' : '(Channel from available: Email, Instagram, LinkedIn, etc.)'}",
+  "formato": "${isSpanish ? '(Formato: post, carrusel, reel, story, email, video, article, pdf)' : '(Format: post, carrusel, reel, story, email, video, article, pdf)'}",
+  "funnelPhase": "awareness" | "consideration" | "conversion" | "retention",
+  "objetivo": "${isSpanish ? '(Objetivo específico de esta pieza en 1 frase: ej. Generar conciencia sobre el problema, Mostrar caso de éxito, etc.)' : '(Specific objective of this piece in 1 sentence: e.g. Generate awareness about the problem, Show success case, etc.)'}",
+  "cta": "${isSpanish ? '(CTA específico, 2-5 palabras: ej. Descarga la guía, Agenda demo, Lee más)' : '(Specific CTA, 2-5 words: e.g. Download guide, Schedule demo, Read more)'}",
+  "ideaVisual": "${isSpanish ? '(Idea visual en 1 frase: qué se ve en la imagen/video. Ej: Infografía con 5 pasos, Screenshot del dashboard, CEO hablando a cámara)' : '(Visual idea in 1 sentence: what is seen in the image/video. E.g.: Infographic with 5 steps, Dashboard screenshot, CEO talking to camera)'}",
+  "copyBase": "${isSpanish ? '(Copy completo listo para usar, 2-4 frases. Debe ser específico para el producto y audiencia, no genérico. Incluye hook + beneficio + CTA)' : '(Complete ready-to-use copy, 2-4 sentences. Must be specific to product and audience, not generic. Include hook + benefit + CTA)'}",
+  "kpiSugerido": "${isSpanish ? '(KPI a medir: ej. Alcance, Engagement rate, CTR, Leads generados, Descargas)' : '(KPI to measure: e.g. Reach, Engagement rate, CTR, Leads generated, Downloads)'}",
+  "categoria": "educacion" | "prueba-social" | "venta" | "comunidad"
+}
+
+${isSpanish ? 'CATEGORÍAS (categoría):' : 'CATEGORIES (categoria):'}
+- ${isSpanish ? '"educacion": contenido que enseña, informa, aporta valor sin vender directamente' : '"educacion": content that teaches, informs, provides value without direct selling'}
+- ${isSpanish ? '"prueba-social": testimonios, casos de éxito, cifras, reviews' : '"prueba-social": testimonials, success cases, numbers, reviews'}
+- ${isSpanish ? '"venta": contenido que invita a comprar, contratar, probar el producto' : '"venta": content that invites to buy, hire, try the product'}
+- ${isSpanish ? '"comunidad": contenido que genera conversación, engagement, sentido de pertenencia' : '"comunidad": content that generates conversation, engagement, sense of belonging'}
+
+${isSpanish ? 'IMPORTANTE - DISTRIBUCIÓN SALUDABLE:' : 'IMPORTANT - HEALTHY DISTRIBUTION:'}
+- ${isSpanish ? 'Educación: 40-50% (6-8 piezas)' : 'Education: 40-50% (6-8 pieces)'}
+- ${isSpanish ? 'Prueba social: 15-20% (2-3 piezas)' : 'Social proof: 15-20% (2-3 pieces)'}
+- ${isSpanish ? 'Venta: 20-30% (3-5 piezas)' : 'Sales: 20-30% (3-5 pieces)'}
+- ${isSpanish ? 'Comunidad: 10-15% (1-2 piezas)' : 'Community: 10-15% (1-2 pieces)'}
+
+${isSpanish ? 'IMPORTANTE - FASE DEL FUNNEL:' : 'IMPORTANT - FUNNEL PHASE:'}
+- ${isSpanish ? 'Awareness: contenido educativo, de problema, tendencias (40%)' : 'Awareness: educational, problem, trends content (40%)'}
+- ${isSpanish ? 'Consideration: comparativas, demos, prueba social (30%)' : 'Consideration: comparisons, demos, social proof (30%)'}
+- ${isSpanish ? 'Conversion: ofertas, demos personalizadas, urgencia (20%)' : 'Conversion: offers, personalized demos, urgency (20%)'}
+- ${isSpanish ? 'Retention: contenido para clientes, casos avanzados, comunidad (10%)' : 'Retention: customer content, advanced cases, community (10%)'}
+
+${isSpanish ? 'Las 15 piezas deben:' : 'The 15 pieces must:'}
+- ${isSpanish ? 'Estar distribuidas entre los 3 semanas' : 'Be distributed across 3 weeks'}
+- ${isSpanish ? 'Usar los canales disponibles de forma equilibrada' : 'Use available channels in a balanced way'}
+- ${isSpanish ? 'Variar los formatos' : 'Vary formats'}
+- ${isSpanish ? 'Tener copy específico y accionable (no placeholders)' : 'Have specific and actionable copy (not placeholders)'}
+- ${isSpanish ? 'Seguir las directrices del Brand Kit' : 'Follow Brand Kit guidelines'}
+- ${isSpanish ? 'Cumplir con la distribución saludable de categorías' : 'Meet healthy category distribution'}
+
+${isSpanish ? 'Devuelve SOLO el JSON válido. No añadas texto fuera del JSON.' : 'Return ONLY valid JSON. Do not add text outside JSON.'}`
+
+      // @ts-expect-error - spark global is provided by runtime
       const variationsPrompt = spark.llmPrompt`${isSpanish ? 'Genera 15 variaciones de copy etiquetadas por ángulo estratégico. Devuelve JSON.' : 'Generate 15 copy variations labeled by strategic angle. Return JSON.'}
 ${brandGuidelines}
 
@@ -1051,6 +1106,7 @@ ${isSpanish ? 'Devuelve un objeto JSON con una propiedad "variations" que conten
         funnelBlueprintJson,
         paidPackJson,
         landingKit,
+        contentCalendarJson,
         emailFlow,
         whatsappFlow,
         flowBienvenidaJson,
@@ -1068,6 +1124,7 @@ ${isSpanish ? 'Devuelve un objeto JSON con una propiedad "variations" que conten
         spark.llm(funnelPrompt, 'gpt-4o', true),
         spark.llm(paidPackPrompt, 'gpt-4o', true),
         spark.llm(landingKitPrompt, 'gpt-4o', true),
+        spark.llm(contentCalendarPrompt, 'gpt-4o', true),
         spark.llm(emailFlowPrompt),
         spark.llm(whatsappFlowPrompt),
         spark.llm(flowBienvenidaPrompt, 'gpt-4o', true),
@@ -1309,68 +1366,16 @@ ${isSpanish ? 'Devuelve un objeto JSON con una propiedad "variations" que conten
 
       const overviewData = parseOverview(overviewText)
 
-      const mockCalendar = [
-        {
-          date: 'Week 1 Day 1',
-          platform: briefData.channels[0] || 'Email',
-          contentType: 'Launch Announcement',
-          objective: 'Awareness',
-          funnelPhase: 'awareness' as const,
-          cta: 'Learn More',
-          format: 'Video',
-          description: 'Introduce the product with compelling visuals'
-        },
-        {
-          date: 'Week 1 Day 3',
-          platform: briefData.channels[1] || 'LinkedIn',
-          contentType: 'Thought Leadership',
-          objective: 'Authority Building',
-          funnelPhase: 'consideration' as const,
-          cta: 'Read Article',
-          format: 'Article',
-          description: 'Industry insights and expertise'
-        },
-        {
-          date: 'Week 1 Day 5',
-          platform: briefData.channels[0] || 'Email',
-          contentType: 'Case Study',
-          objective: 'Social Proof',
-          funnelPhase: 'consideration' as const,
-          cta: 'See Results',
-          format: 'PDF',
-          description: 'Real customer success story'
-        },
-        {
-          date: 'Week 2 Day 2',
-          platform: briefData.channels[2] || 'Instagram',
-          contentType: 'Product Demo',
-          objective: 'Education',
-          funnelPhase: 'conversion' as const,
-          cta: 'Try Now',
-          format: 'Carousel',
-          description: 'Step-by-step product walkthrough'
-        },
-        {
-          date: 'Week 2 Day 4',
-          platform: briefData.channels[0] || 'Email',
-          contentType: 'Limited Offer',
-          objective: 'Conversion',
-          funnelPhase: 'conversion' as const,
-          cta: 'Claim Offer',
-          format: 'Email',
-          description: 'Time-sensitive promotion'
-        },
-        {
-          date: 'Week 2 Day 7',
-          platform: briefData.channels[1] || 'LinkedIn',
-          contentType: 'Customer Testimonial',
-          objective: 'Retention',
-          funnelPhase: 'retention' as const,
-          cta: 'Join Community',
-          format: 'Video',
-          description: 'Happy customer sharing experience'
+      let parsedContentCalendar: ContentCalendarItem[] = []
+      try {
+        const parsed = JSON.parse(contentCalendarJson)
+        if (parsed.items && Array.isArray(parsed.items)) {
+          parsedContentCalendar = parsed.items
         }
-      ]
+      } catch (e) {
+        console.error('Failed to parse content calendar JSON', e)
+        parsedContentCalendar = []
+      }
 
       setOutputs(() => ({
         overview: overviewData,
@@ -1379,7 +1384,7 @@ ${isSpanish ? 'Devuelve un objeto JSON con una propiedad "variations" que conten
         funnelBlueprint: parsedFunnelBlueprint,
         paidPack: parsedPaidPack,
         landingKit: parsedLandingKit,
-        contentCalendar: mockCalendar,
+        contentCalendar: parsedContentCalendar,
         emailFlow,
         whatsappFlow,
         flows: flowSequences.length > 0 ? flowSequences : undefined,
