@@ -4,6 +4,7 @@ export interface BrandConsistencyResult {
   score: number
   suggestedChanges: SuggestedChange[]
   riskSignals: RiskSignal[]
+  alternativePhrases: AlternativePhrase[]
 }
 
 export interface SuggestedChange {
@@ -20,6 +21,13 @@ export interface RiskSignal {
   severity: 'bajo' | 'medio' | 'alto'
   description: string
   location: string
+}
+
+export interface AlternativePhrase {
+  id: string
+  phrase: string
+  reason: string
+  context: string
 }
 
 export async function evaluateBrandConsistency(
@@ -67,6 +75,14 @@ ${isSpanish ? 'Devuelve un objeto JSON con la siguiente estructura:' : 'Return a
       "description": "${isSpanish ? 'Descripción del riesgo detectado' : 'Description of detected risk'}",
       "location": "${isSpanish ? 'Dónde aparece en el texto' : 'Where it appears in the text'}"
     }
+  ],
+  "alternativePhrases": [
+    {
+      "id": "alt-1",
+      "phrase": "${isSpanish ? 'Frase alternativa completa con el tono correcto' : 'Complete alternative phrase with correct tone'}",
+      "reason": "${isSpanish ? 'Por qué esta frase se ajusta mejor al Brand Kit' : 'Why this phrase fits better with Brand Kit'}",
+      "context": "${isSpanish ? 'Contexto de uso: headline/body/cta/etc' : 'Usage context: headline/body/cta/etc'}"
+    }
   ]
 }
 
@@ -98,7 +114,13 @@ ${isSpanish ? '4. SEÑALES DE RIESGO A DETECTAR:' : '4. RISK SIGNALS TO DETECT:'
    - ${isSpanish ? 'promesa-sin-prueba: Promesas de resultados sin datos, testimonios, casos o garantía' : 'promesa-sin-prueba: Result promises without data, testimonials, cases or guarantee'}
    - ${isSpanish ? 'palabra-prohibida: Uso de palabras explícitamente prohibidas en el Brand Kit' : 'palabra-prohibida: Use of explicitly forbidden words in Brand Kit'}
 
-${isSpanish ? 'IMPORTANTE: Genera exactamente 5 cambios sugeridos priorizando los más impactantes. Ordena riskSignals por severidad (alto → medio → bajo).' : 'IMPORTANT: Generate exactly 5 suggested changes prioritizing the most impactful. Order riskSignals by severity (high → medium → low).'}
+${isSpanish ? '5. FRASES ALTERNATIVAS:' : '5. ALTERNATIVE PHRASES:'}
+   - ${isSpanish ? 'Genera EXACTAMENTE 3 frases alternativas completas que transmitan el mismo mensaje pero con el tono correcto del Brand Kit' : 'Generate EXACTLY 3 complete alternative phrases that convey the same message but with the correct Brand Kit tone'}
+   - ${isSpanish ? 'Las frases deben ser directamente utilizables (copy listo para usar)' : 'The phrases must be directly usable (ready-to-use copy)'}
+   - ${isSpanish ? 'Cada frase debe ejemplificar el tono y estilo deseado' : 'Each phrase must exemplify the desired tone and style'}
+   - ${isSpanish ? 'Indica el contexto de uso para cada frase (headline, body text, CTA, etc.)' : 'Indicate usage context for each phrase (headline, body text, CTA, etc.)'}
+
+${isSpanish ? 'IMPORTANTE: Genera exactamente 5 cambios sugeridos priorizando los más impactantes. Genera EXACTAMENTE 3 frases alternativas. Ordena riskSignals por severidad (alto → medio → bajo).' : 'IMPORTANT: Generate exactly 5 suggested changes prioritizing the most impactful. Generate EXACTLY 3 alternative phrases. Order riskSignals by severity (high → medium → low).'}
 `
 
   const resultJson = await spark.llm(prompt, 'gpt-4o', true)
@@ -124,19 +146,30 @@ ${isSpanish ? 'IMPORTANTE: Genera exactamente 5 cambios sugeridos priorizando lo
       location: risk.location || ''
     }))
     
+    const alternativePhrases: AlternativePhrase[] = (parsed.alternativePhrases || [])
+      .slice(0, 3)
+      .map((alt: any, idx: number) => ({
+        id: alt.id || `alt-${idx}`,
+        phrase: alt.phrase || '',
+        reason: alt.reason || '',
+        context: alt.context || ''
+      }))
+    
     const score = Math.max(0, Math.min(100, parsed.score || 50))
     
     return {
       score,
       suggestedChanges,
-      riskSignals
+      riskSignals,
+      alternativePhrases
     }
   } catch (e) {
     console.error('Failed to parse brand consistency result', e)
     return {
       score: 50,
       suggestedChanges: [],
-      riskSignals: []
+      riskSignals: [],
+      alternativePhrases: []
     }
   }
 }

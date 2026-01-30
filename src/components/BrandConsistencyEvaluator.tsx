@@ -6,11 +6,11 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Progress } from '@/components/ui/progress'
 import { Card } from '@/components/ui/card'
-import { CheckCircle, XCircle, Warning, Sparkle, ArrowRight, Check } from '@phosphor-icons/react'
+import { CheckCircle, XCircle, Warning, Sparkle, ArrowRight, Check, Quotes, Copy } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import type { Language } from '@/lib/i18n'
 import type { BrandKit } from '@/lib/types'
-import { evaluateBrandConsistency, type BrandConsistencyResult, type SuggestedChange, type RiskSignal } from '@/lib/brandConsistencyChecker'
+import { evaluateBrandConsistency, type BrandConsistencyResult, type SuggestedChange, type RiskSignal, type AlternativePhrase } from '@/lib/brandConsistencyChecker'
 
 interface BrandConsistencyEvaluatorProps {
   content: string
@@ -301,8 +301,57 @@ export function BrandConsistencyEvaluator({ content, blockName, language, onAppl
                 </div>
               )}
 
+              {/* Alternative Phrases */}
+              {result.alternativePhrases.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                    <Quotes size={18} weight="fill" />
+                    {language === 'es' ? 'Frases Alternativas con el Tono Correcto' : 'Alternative Phrases with Correct Tone'}
+                    <Badge variant="secondary" className="ml-auto">
+                      {result.alternativePhrases.length}
+                    </Badge>
+                  </h3>
+                  <div className="space-y-3">
+                    {result.alternativePhrases.map((alt) => (
+                      <Card 
+                        key={alt.id}
+                        className="glass-panel p-4 rounded-xl border-2 border-accent/40 space-y-3"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <Badge variant="outline" className="text-xs shrink-0">
+                            {alt.context}
+                          </Badge>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="rounded-lg shrink-0"
+                            onClick={() => {
+                              navigator.clipboard.writeText(alt.phrase)
+                              toast.success(language === 'es' ? '📋 Frase copiada' : '📋 Phrase copied')
+                            }}
+                          >
+                            <Copy size={14} weight="bold" />
+                            {language === 'es' ? 'Copiar' : 'Copy'}
+                          </Button>
+                        </div>
+                        
+                        <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+                          <p className="text-sm font-medium leading-relaxed">{alt.phrase}</p>
+                        </div>
+                        
+                        <div className="pt-2 border-t border-border">
+                          <p className="text-xs text-muted-foreground">
+                            <span className="font-semibold">{language === 'es' ? 'Por qué funciona:' : 'Why it works:'}</span> {alt.reason}
+                          </p>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* No Issues */}
-              {result.suggestedChanges.length === 0 && result.riskSignals.length === 0 && (
+              {result.suggestedChanges.length === 0 && result.riskSignals.length === 0 && result.alternativePhrases.length === 0 && (
                 <Card className="glass-panel p-8 rounded-2xl border-2 border-primary/40 text-center">
                   <CheckCircle size={48} weight="fill" className="text-primary mx-auto mb-4" />
                   <h3 className="text-lg font-bold mb-2">
