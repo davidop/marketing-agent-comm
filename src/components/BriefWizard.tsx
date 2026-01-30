@@ -11,10 +11,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Lightning, CaretDown, Check, CheckCircle, ArrowRight, ArrowLeft, Info, Sparkle } from '@phosphor-icons/react'
+import { Lightning, CaretDown, Check, CheckCircle, ArrowRight, ArrowLeft, Info, Sparkle, FilePlus } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 import BriefScoreCard from '@/components/BriefScoreCard'
 import { QuickQuestionsModal } from '@/components/QuickQuestionsModal'
+import DemoBriefSelector from '@/components/DemoBriefSelector'
 import { analyzeBrief } from '@/lib/briefAnalyzer'
 import type { CampaignBriefData, BrandKit } from '@/lib/types'
 
@@ -858,6 +859,10 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
   }
 
   const briefAnalysis = formData ? analyzeBrief(formData, brandKit) : null
+  
+  const handleDemoBriefSelected = (briefData: CampaignBriefData, brandKitData: BrandKit) => {
+    setFormData(() => briefData)
+  }
 
   return (
     <>
@@ -872,6 +877,11 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
       )}
 
       <div className="space-y-4">
+        <DemoBriefSelector 
+          onBriefSelected={handleDemoBriefSelected}
+          language={language}
+        />
+
         {briefAnalysis && (
           <BriefScoreCard 
             analysis={briefAnalysis}
@@ -890,16 +900,63 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
               </span>
             </h2>
             
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={loadDemoData}
-              className="rounded-xl border-2 gap-2"
-            >
-              <Sparkle size={16} weight="fill" />
-              {language === 'es' ? 'Demo' : 'Demo'}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setFormData(() => ({
+                    objective: '',
+                    kpi: '',
+                    segments: '',
+                    pains: '',
+                    objections: '',
+                    buyingContext: '',
+                    product: '',
+                    price: '',
+                    promo: '',
+                    guarantee: '',
+                    usp: '',
+                    channels: [],
+                    budget: '',
+                    timing: '',
+                    geography: '',
+                    language: 'es',
+                    tone: '',
+                    brandVoice: '',
+                    forbiddenWords: '',
+                    allowedClaims: '',
+                    legalRequirements: '',
+                    availableAssets: '',
+                    links: '',
+                    audience: '',
+                    goals: '',
+                    mainPromise: '',
+                    proof: [],
+                    competitors: [],
+                    timeline: '',
+                    sector: ''
+                  }))
+                  setCurrentStep(0)
+                }}
+                className="rounded-xl border-2 gap-2"
+              >
+                <FilePlus size={16} weight="fill" />
+                {language === 'es' ? 'Nuevo' : 'New'}
+              </Button>
+              
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={loadDemoData}
+                className="rounded-xl border-2 gap-2"
+              >
+                <Sparkle size={16} weight="fill" />
+                {language === 'es' ? 'Llenar ejemplo' : 'Fill example'}
+              </Button>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
