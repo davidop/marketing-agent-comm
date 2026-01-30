@@ -270,6 +270,37 @@ export interface RisksAssumptionsData {
   recommendations?: string[]
 }
 
+export interface ExecutionChecklistTask {
+  id: string
+  task: string
+  responsible: 'Marketing' | 'Diseño' | 'Web/Dev' | 'Legal' | 'Producto' | 'Contenido'
+  effort: 'S' | 'M' | 'L'
+  order: number
+  dependencies?: string[]
+  critical: boolean
+  estimatedHours?: string
+  deliverable?: string
+  notes?: string
+}
+
+export interface ExecutionChecklistPhase {
+  phase: string
+  description: string
+  tasks: ExecutionChecklistTask[]
+}
+
+export interface ExecutionChecklistData {
+  totalTasks: number
+  estimatedTotalTime: string
+  phases: ExecutionChecklistPhase[]
+  criticalPath: string[]
+  teamAllocation: {
+    team: string
+    taskCount: number
+    estimatedHours: string
+  }[]
+}
+
 export interface CampaignOutput {
   overview?: {
     objective: string
@@ -297,7 +328,7 @@ export interface CampaignOutput {
   experimentPlan: string
   measurementUtms: string | MeasurementUtmsData
   risks: string | RisksAssumptionsData
-  executionChecklist: string
+  executionChecklist: string | ExecutionChecklistData
 }
 
 export interface CampaignVersion {

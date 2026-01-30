@@ -13,6 +13,7 @@ import LandingKitDisplay from '@/components/LandingKitDisplay'
 import FlowsDisplay from '@/components/FlowsDisplay'
 import MeasurementUtmsDisplay from '@/components/MeasurementUtmsDisplay'
 import { RisksAssumptionsDisplay } from '@/components/RisksAssumptionsDisplay'
+import ExecutionChecklistDisplay from '@/components/ExecutionChecklistDisplay'
 import { 
   Eye,
   Target,
@@ -27,7 +28,7 @@ import {
   Warning,
   CheckSquare
 } from '@phosphor-icons/react'
-import type { CampaignOutput, ContentCalendarItem, CreativeRoute, FunnelPhase, PaidPackData, LandingKitData, FlowSequence, RisksAssumptionsData } from '@/lib/types'
+import type { CampaignOutput, ContentCalendarItem, CreativeRoute, FunnelPhase, PaidPackData, LandingKitData, FlowSequence, RisksAssumptionsData, ExecutionChecklistData } from '@/lib/types'
 
 interface CampaignDashboardProps {
   outputs: Partial<CampaignOutput>
@@ -392,17 +393,24 @@ export function CampaignDashboard({
         </TabsContent>
 
         <TabsContent value="checklist" className="mt-0">
-          <OutputCard
-            title={t('Checklist de Ejecución', 'Execution Checklist')}
-            icon={<CheckSquare size={20} weight="fill" />}
-            content={outputs.executionChecklist || ''}
-            isLoading={isGenerating}
-            emptyMessage={t('El checklist se generará aquí', 'Checklist will be generated here')}
-            language={language}
-            onRegenerate={() => onRegenerateBlock?.('executionChecklist')}
-            onSaveVersion={(content) => handleSaveVersion('executionChecklist', content)}
-            blockName="executionChecklist"
-          />
+          {outputs.executionChecklist && typeof outputs.executionChecklist === 'object' ? (
+            <ExecutionChecklistDisplay 
+              data={outputs.executionChecklist as ExecutionChecklistData} 
+              language={language}
+            />
+          ) : (
+            <OutputCard
+              title={t('Checklist de Ejecución', 'Execution Checklist')}
+              icon={<CheckSquare size={20} weight="fill" />}
+              content={typeof outputs.executionChecklist === 'string' ? outputs.executionChecklist : ''}
+              isLoading={isGenerating}
+              emptyMessage={t('El checklist se generará aquí', 'Checklist will be generated here')}
+              language={language}
+              onRegenerate={() => onRegenerateBlock?.('executionChecklist')}
+              onSaveVersion={(content) => handleSaveVersion('executionChecklist', content)}
+              blockName="executionChecklist"
+            />
+          )}
         </TabsContent>
       </Tabs>
     </div>

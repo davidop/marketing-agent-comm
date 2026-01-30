@@ -906,11 +906,118 @@ ${isSpanish ? 'IMPORTANTE:' : 'IMPORTANT:'}
 ${isSpanish ? 'Devuelve SOLO el JSON válido con el formato exacto indicado. No añadas texto adicional fuera del JSON.' : 'Return ONLY the valid JSON with the exact format indicated. Do not add additional text outside the JSON.'}`
 
       // @ts-expect-error - spark global is provided by runtime
-      const checklistPrompt = spark.llmPrompt`${isSpanish ? 'Crea un checklist ejecutivo paso a paso para lanzar esta campaña:' : 'Create a step-by-step executive checklist to launch this campaign:'}
+      const checklistPrompt = spark.llmPrompt`${isSpanish ? 'Crea una Execution Checklist completa con tareas, responsables y estimaciones en formato JSON estructurado.' : 'Create a complete Execution Checklist with tasks, responsible parties, and estimates in structured JSON format.'}
+${brandGuidelines}
 
+Producto: ${briefData.product}
+Audiencia: ${briefData.audience}
+Objetivos: ${briefData.goals}
 Canales: ${briefData.channels.join(', ')}
+Presupuesto: ${briefData.budget}
+Timing: ${briefData.timing || 'TBD'}
 
-${isSpanish ? 'Organiza por fases: Pre-lanzamiento, Lanzamiento, Post-lanzamiento. Cada ítem debe ser específico y accionable.' : 'Organize by phases: Pre-launch, Launch, Post-launch. Each item should be specific and actionable.'}`
+${isSpanish ? 'Devuelve un objeto JSON con esta estructura EXACTA:' : 'Return a JSON object with this EXACT structure:'}
+
+{
+  "totalTasks": ${isSpanish ? '(número total de tareas)' : '(total number of tasks)'},
+  "estimatedTotalTime": "${isSpanish ? '(tiempo total estimado, ej: 120-160 horas)' : '(total estimated time, e.g.: 120-160 hours)'}",
+  "phases": [
+    {
+      "phase": "${isSpanish ? '(Nombre de la fase: Pre-lanzamiento, Configuración, Producción creativa, Lanzamiento, Optimización, Post-lanzamiento)' : '(Phase name: Pre-launch, Setup, Creative production, Launch, Optimization, Post-launch)'}",
+      "description": "${isSpanish ? '(Descripción breve de qué se hace en esta fase)' : '(Brief description of what happens in this phase)'}",
+      "tasks": [
+        {
+          "id": "${isSpanish ? '(ID único: pre-1, setup-1, creative-1, etc.)' : '(Unique ID: pre-1, setup-1, creative-1, etc.)'}",
+          "task": "${isSpanish ? '(Descripción clara y accionable de la tarea)' : '(Clear and actionable task description)'}",
+          "responsible": "Marketing" | "Diseño" | "Web/Dev" | "Legal" | "Producto" | "Contenido",
+          "effort": "S" | "M" | "L",
+          "order": ${isSpanish ? '(número de orden en el proyecto total, empezando en 1)' : '(order number in total project, starting at 1)'},
+          "dependencies": [${isSpanish ? '"(ID de tareas que deben completarse antes, si aplica)"' : '"(IDs of tasks that must be completed first, if applicable)"'}],
+          "critical": true | false,
+          "estimatedHours": "${isSpanish ? '(ej: 4-6h, 1-2h, 8-12h)' : '(e.g.: 4-6h, 1-2h, 8-12h)'}",
+          "deliverable": "${isSpanish ? '(Qué se entrega: documento, diseño, código, etc.)' : '(What is delivered: document, design, code, etc.)'}",
+          "notes": "${isSpanish ? '(Notas adicionales o contexto importante, opcional)' : '(Additional notes or important context, optional)'}"
+        }
+      ]
+    }
+  ],
+  "criticalPath": [${isSpanish ? '"(IDs de tareas críticas que definen el timeline mínimo)"' : '"(IDs of critical tasks that define minimum timeline)"'}],
+  "teamAllocation": [
+    {
+      "team": "Marketing" | "Diseño" | "Web/Dev" | "Legal" | "Producto" | "Contenido",
+      "taskCount": ${isSpanish ? '(número de tareas asignadas)' : '(number of assigned tasks)'},
+      "estimatedHours": "${isSpanish ? '(horas estimadas para este equipo, ej: 40-50h)' : '(estimated hours for this team, e.g.: 40-50h)'}"
+    }
+  ]
+}
+
+${isSpanish ? 'IMPORTANTE - Genera tareas para TODAS estas fases:' : 'IMPORTANT - Generate tasks for ALL these phases:'}
+
+${isSpanish ? '**FASE 1: Pre-lanzamiento / Estrategia (Marketing, Legal)**' : '**PHASE 1: Pre-launch / Strategy (Marketing, Legal)**'}
+${isSpanish ? '- Validar brief y datos críticos' : '- Validate brief and critical data'}
+${isSpanish ? '- Definir KPIs y objetivos finales' : '- Define KPIs and final objectives'}
+${isSpanish ? '- Configurar Brand Kit en plataformas' : '- Set up Brand Kit on platforms'}
+${isSpanish ? '- Revisar claims y requisitos legales (si aplica)' : '- Review claims and legal requirements (if applicable)'}
+${isSpanish ? '- Crear documento de estrategia aprobado' : '- Create approved strategy document'}
+${isSpanish ? '- Definir audiencias y segmentos' : '- Define audiences and segments'}
+
+${isSpanish ? '**FASE 2: Configuración técnica (Web/Dev, Marketing)**' : '**PHASE 2: Technical setup (Web/Dev, Marketing)**'}
+${isSpanish ? '- Instalar píxeles de tracking (Meta, Google, LinkedIn)' : '- Install tracking pixels (Meta, Google, LinkedIn)'}
+${isSpanish ? '- Configurar eventos de conversión' : '- Set up conversion events'}
+${isSpanish ? '- Crear estructura de campañas en plataformas paid' : '- Create campaign structure in paid platforms'}
+${isSpanish ? '- Configurar UTMs y naming convention' : '- Set up UTMs and naming convention'}
+${isSpanish ? '- Preparar dashboards de reporting' : '- Prepare reporting dashboards'}
+${isSpanish ? '- Configurar integraciones CRM/Email' : '- Set up CRM/Email integrations'}
+${isSpanish ? '- Testing de tracking en entorno de prueba' : '- Testing tracking in test environment'}
+
+${isSpanish ? '**FASE 3: Producción creativa (Diseño, Contenido, Marketing)**' : '**PHASE 3: Creative production (Design, Content, Marketing)**'}
+${isSpanish ? '- Crear copy de anuncios (hooks, headlines, descripciones)' : '- Create ad copy (hooks, headlines, descriptions)'}
+${isSpanish ? '- Diseñar creatividades para anuncios (estáticos, carousel, video)' : '- Design ad creatives (static, carousel, video)'}
+${isSpanish ? '- Diseñar y desarrollar landing page' : '- Design and develop landing page'}
+${isSpanish ? '- Crear copy de landing (todas las secciones)' : '- Create landing copy (all sections)'}
+${isSpanish ? '- Configurar formularios y thank you pages' : '- Set up forms and thank you pages'}
+${isSpanish ? '- Crear secuencias de email (bienvenida, nurturing)' : '- Create email sequences (welcome, nurturing)'}
+${isSpanish ? '- Preparar contenido orgánico de apoyo' : '- Prepare supporting organic content'}
+${isSpanish ? '- Validar consistencia de marca en todos los assets' : '- Validate brand consistency across all assets'}
+
+${isSpanish ? '**FASE 4: Lanzamiento (Marketing, Web/Dev)**' : '**PHASE 4: Launch (Marketing, Web/Dev)**'}
+${isSpanish ? '- Subir creatividades a plataformas paid' : '- Upload creatives to paid platforms'}
+${isSpanish ? '- Configurar audiencias y segmentos' : '- Set up audiences and segments'}
+${isSpanish ? '- Publicar landing page en producción' : '- Publish landing page to production'}
+${isSpanish ? '- Activar secuencias de email automatizadas' : '- Activate automated email sequences'}
+${isSpanish ? '- Validar tracking en vivo (pre-launch check)' : '- Validate live tracking (pre-launch check)'}
+${isSpanish ? '- Lanzar campañas con presupuesto de testing' : '- Launch campaigns with testing budget'}
+${isSpanish ? '- Monitorizar primeras 24-48h' : '- Monitor first 24-48h'}
+
+${isSpanish ? '**FASE 5: Optimización (Marketing, Diseño)**' : '**PHASE 5: Optimization (Marketing, Design)**'}
+${isSpanish ? '- Revisar métricas cada 48-72h' : '- Review metrics every 48-72h'}
+${isSpanish ? '- Pausar/escalar adsets según performance' : '- Pause/scale adsets based on performance'}
+${isSpanish ? '- Testear nuevas variantes de copy y creatividad' : '- Test new copy and creative variants'}
+${isSpanish ? '- Optimizar audiencias (excluir/incluir)' : '- Optimize audiences (exclude/include)'}
+${isSpanish ? '- Ajustar pujas y presupuestos' : '- Adjust bids and budgets'}
+${isSpanish ? '- A/B testing en landing (si bajo CTR)' : '- A/B testing on landing (if low CTR)'}
+${isSpanish ? '- Iterar en mensajes según objeciones detectadas' : '- Iterate on messages based on detected objections'}
+
+${isSpanish ? '**FASE 6: Post-lanzamiento / Reporting (Marketing, Producto)**' : '**PHASE 6: Post-launch / Reporting (Marketing, Product)**'}
+${isSpanish ? '- Crear reporte semanal de resultados' : '- Create weekly results report'}
+${isSpanish ? '- Documentar aprendizajes y optimizaciones' : '- Document learnings and optimizations'}
+${isSpanish ? '- Activar secuencias de retargeting' : '- Activate retargeting sequences'}
+${isSpanish ? '- Configurar flows de winback' : '- Set up winback flows'}
+${isSpanish ? '- Revisar feedback cualitativo (comentarios, FAQs)' : '- Review qualitative feedback (comments, FAQs)'}
+${isSpanish ? '- Planificar siguientes iteraciones' : '- Plan next iterations'}
+
+${isSpanish ? 'IMPORTANTE:' : 'IMPORTANT:'}
+- ${isSpanish ? 'Genera entre 30-50 tareas en total, distribuidas entre las 6 fases.' : 'Generate 30-50 total tasks, distributed across the 6 phases.'}
+- ${isSpanish ? 'Asigna responsables realistas (Marketing hace estrategia, Diseño hace creatividades, Web/Dev hace código y tracking, Legal revisa claims si sector regulado).' : 'Assign realistic responsible parties (Marketing does strategy, Design does creatives, Web/Dev does code and tracking, Legal reviews claims if regulated sector).'}
+- ${isSpanish ? 'Marca como críticas (critical: true) SOLO las tareas que bloquean el lanzamiento o siguiente fase.' : 'Mark as critical (critical: true) ONLY tasks that block launch or next phase.'}
+- ${isSpanish ? 'Usa "S" (Small: 1-4h), "M" (Medium: 4-12h), "L" (Large: 12h+) para effort.' : 'Use "S" (Small: 1-4h), "M" (Medium: 4-12h), "L" (Large: 12h+) for effort.'}
+- ${isSpanish ? 'Si una tarea depende de otra, añade el ID en dependencies.' : 'If a task depends on another, add the ID in dependencies.'}
+- ${isSpanish ? 'El criticalPath debe incluir solo 8-12 tareas críticas que definen el timeline mínimo de principio a fin.' : 'The criticalPath must include only 8-12 critical tasks that define the minimum timeline from start to finish.'}
+- ${isSpanish ? 'teamAllocation debe sumar todas las tareas y horas por equipo.' : 'teamAllocation must sum all tasks and hours by team.'}
+
+${isSpanish ? 'Ejemplo de IDs: "pre-1", "pre-2", "setup-1", "creative-1", "launch-1", "opt-1", "post-1"' : 'Example IDs: "pre-1", "pre-2", "setup-1", "creative-1", "launch-1", "opt-1", "post-1"'}
+
+${isSpanish ? 'Devuelve SOLO el JSON válido con el formato exacto indicado. No añadas texto adicional fuera del JSON.' : 'Return ONLY the valid JSON with the exact format indicated. Do not add additional text outside the JSON.'}`
 
       // @ts-expect-error - spark global is provided by runtime
       const variationsPrompt = spark.llmPrompt`${isSpanish ? 'Genera 15 variaciones de copy etiquetadas por ángulo estratégico. Devuelve JSON.' : 'Generate 15 copy variations labeled by strategic angle. Return JSON.'}
@@ -964,7 +1071,7 @@ ${isSpanish ? 'Devuelve un objeto JSON con una propiedad "variations" que conten
         spark.llm(experimentPlanPrompt),
         spark.llm(measurementUtmsPrompt, 'gpt-4o', true),
         spark.llm(risksPrompt, 'gpt-4o', true),
-        spark.llm(checklistPrompt),
+        spark.llm(checklistPrompt, 'gpt-4o', true),
         spark.llm(variationsPrompt, 'gpt-4o', true)
       ])
 
@@ -1107,6 +1214,17 @@ ${isSpanish ? 'Devuelve un objeto JSON con una propiedad "variations" que conten
       } catch (e) {
         console.error('Failed to parse risks JSON, using text fallback', e)
         parsedRisks = risksJson
+      }
+
+      let parsedExecutionChecklist: any = executionChecklist
+      try {
+        const parsed = JSON.parse(executionChecklist)
+        if (parsed.phases && parsed.totalTasks && parsed.teamAllocation) {
+          parsedExecutionChecklist = parsed
+        }
+      } catch (e) {
+        console.error('Failed to parse execution checklist JSON, using text fallback', e)
+        parsedExecutionChecklist = executionChecklist
       }
 
       const parseOverview = (text: string) => {
@@ -1258,7 +1376,7 @@ ${isSpanish ? 'Devuelve un objeto JSON con una propiedad "variations" que conten
         experimentPlan,
         measurementUtms: parsedMeasurementUtms,
         risks: parsedRisks,
-        executionChecklist
+        executionChecklist: parsedExecutionChecklist
       }))
 
       setCopyVariations(() => parsedVariations)

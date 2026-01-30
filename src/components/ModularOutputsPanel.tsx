@@ -17,7 +17,8 @@ import { CreativeRoutesDisplay } from '@/components/CreativeRoutesDisplay'
 import FunnelBlueprint from '@/components/FunnelBlueprint'
 import LandingKitDisplay from '@/components/LandingKitDisplay'
 import MeasurementUtmsDisplay from '@/components/MeasurementUtmsDisplay'
-import type { CampaignOutput, CreativeRoute, FunnelPhase, LandingKitData, MeasurementUtmsData } from '@/lib/types'
+import ExecutionChecklistDisplay from '@/components/ExecutionChecklistDisplay'
+import type { CampaignOutput, CreativeRoute, FunnelPhase, LandingKitData, MeasurementUtmsData, ExecutionChecklistData } from '@/lib/types'
 
 interface ModularOutputsPanelProps {
   outputs: Partial<CampaignOutput>
@@ -467,16 +468,23 @@ export function ModularOutputsPanel({ outputs, isGenerating, language, onRegener
 
         <TabsContent value="execution" className="mt-0">
           <div className="grid grid-cols-1 gap-4">
-            <OutputBlock
-              title={language === 'es' ? 'Checklist de Ejecución' : 'Execution Checklist'}
-              icon={<CheckSquare size={20} weight="fill" className="text-success" />}
-              content={outputs.executionChecklist || ''}
-              isLoading={isGenerating}
-              emptyMessage={language === 'es' ? 'Lista paso a paso para ejecutar la campaña' : 'Step-by-step list to execute the campaign'}
-              onRegenerate={() => onRegenerateBlock?.('executionChecklist')}
-              language={language}
-              variant="highlight"
-            />
+            {outputs.executionChecklist && typeof outputs.executionChecklist === 'object' ? (
+              <ExecutionChecklistDisplay 
+                data={outputs.executionChecklist as ExecutionChecklistData} 
+                language={language}
+              />
+            ) : (
+              <OutputBlock
+                title={language === 'es' ? 'Checklist de Ejecución' : 'Execution Checklist'}
+                icon={<CheckSquare size={20} weight="fill" className="text-success" />}
+                content={typeof outputs.executionChecklist === 'string' ? outputs.executionChecklist : ''}
+                isLoading={isGenerating}
+                emptyMessage={language === 'es' ? 'Lista paso a paso para ejecutar la campaña' : 'Step-by-step list to execute the campaign'}
+                onRegenerate={() => onRegenerateBlock?.('executionChecklist')}
+                language={language}
+                variant="highlight"
+              />
+            )}
             
             <Card className="glass-panel p-5 border-2">
               <h3 className="text-sm font-bold uppercase tracking-wider text-foreground mb-4 flex items-center gap-2">
