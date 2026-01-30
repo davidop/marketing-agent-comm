@@ -1,15 +1,22 @@
-# Marketing Agent Command Center - Intelligent Campaign Brief System
+# Marketing Agent Command Center - Strategic Campaign System
 
-A premium marketing campaign brief wizard with real-time intelligent scoring, smart gap detection, persistent Brand Kit configuration, AI-powered brand consistency evaluation, and modular campaign dashboard with actionable outputs that guides users to create high-quality, on-brand campaign materials.
+Un sistema premium de planificación y ejecución de campañas de marketing digital orientado a **performance y brand**, que convierte briefs en campañas ejecutables, específicas y coherentes con la marca. Diseñado desde la perspectiva de una estratega senior de marketing digital.
+
+**Filosofía estratégica**:
+- **No inventar datos**: Si falta precio, resultados o testimonios, el sistema pregunta o marca como TBD
+- **Cero generalidades**: Todo debe ser accionable (qué, por qué, cómo, con qué KPI)
+- **Brand Kit como guardia**: Tono, palabras prohibidas, claims y emojis se respetan en todos los outputs
+- **Estructura modular clara**: Bloques con títulos claros, jerarquía visual y fácil navegación
+- **Diferenciación primero**: Si el USP no existe, se propone como hipótesis y se pide confirmación
 
 **Experience Qualities**:
-1. **Empowering** - Users feel confident and informed as they build their brief, with clear guidance on what will make their campaign stronger
-2. **Intelligent** - System detects critical gaps and asks smart contextual questions before generation
-3. **Consistent** - Brand voice and guidelines are automatically applied to all generated content, ensuring cohesive messaging
-4. **Actionable** - All outputs are presented in modular cards with copy, edit, regenerate, and versioning capabilities
+1. **Estratégica** - El sistema piensa como una estratega senior: prioriza claridad, diferenciación y consistencia de marca
+2. **Rigurosa** - No permite promesas sin prueba, detecta claims dudosos y advierte sobre genericidad
+3. **Ejecutable** - Cada output es accionable: con KPIs claros, responsables definidos y next steps
+4. **Consistente** - Brand voice se aplica automáticamente y se puede evaluar en cada bloque
 
 **Complexity Level**: Complex Application (advanced functionality, multiple views, persistent state)
-This is a guided form wizard with real-time scoring calculations, intelligent gap detection, dynamic question generation, persistent brand kit storage, brand consistency evaluation, modular dashboard with tabs, content versioning, validation logic, and persistent state management through multiple steps.
+Sistema de planificación estratégica con brief scoring, gap detection inteligente, Brand Kit persistente, evaluación de consistencia, dashboard modular con 12 tabs, versionado de contenido, y generación orientada a performance.
 
 ## Essential Features
 
