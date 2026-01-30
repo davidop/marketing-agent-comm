@@ -15,8 +15,8 @@ import { Lightning, CaretDown, Check, CheckCircle, ArrowRight, ArrowLeft, Info, 
 import { cn } from '@/lib/utils'
 import BriefScoreCard from '@/components/BriefScoreCard'
 import { QuickQuestionsModal } from '@/components/QuickQuestionsModal'
-import { detectBriefGaps, type QuickQuestion } from '@/lib/briefGapDetector'
-import type { CampaignBriefData } from '@/lib/types'
+import { analyzeBrief } from '@/lib/briefAnalyzer'
+import type { CampaignBriefData, BrandKit } from '@/lib/types'
 
 interface BriefWizardProps {
   onGenerate: (data: CampaignBriefData) => void
@@ -73,7 +73,7 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
   const [currentStep, setCurrentStep] = useState(0)
   const [isChannelOpen, setIsChannelOpen] = useState(false)
   const [showQuickQuestions, setShowQuickQuestions] = useState(false)
-  const [quickQuestions, setQuickQuestions] = useState<QuickQuestion[]>([])
+  const [brandKit] = useKV<BrandKit>('brand-kit-v2')
   
   const [formData, setFormData] = useKV<CampaignBriefData>('campaign-brief-data', {
     objective: '',
@@ -222,10 +222,9 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
   const handleSubmit = () => {
     if (!formData) return
     
-    const gapDetection = detectBriefGaps(formData, language)
+    const analysis = analyzeBrief(formData, brandKit)
     
-    if (gapDetection.hasGaps) {
-      setQuickQuestions(gapDetection.questions)
+    if (analysis.criticalQuestions.length > 0 && analysis.status === 'needs-improvement') {
       setShowQuickQuestions(true)
     } else {
       proceedWithGeneration(formData)
@@ -836,72 +835,28 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
     }
   }
 
-  const calculateBriefScore = () => {
-    const data = formData || {} as CampaignBriefData
-    let score = 0
-    const missing: string[] = []
-    const recommendations: string[] = []
-
-    if (data.product) score += 15
-    else missing.push(language === 'es' ? 'Producto/Servicio' : 'Product/Service')
-
-    if (data.audience) score += 15
-    else missing.push(language === 'es' ? 'Audiencia' : 'Audience')
-
-    if (data.goals) score += 15
-    else missing.push(language === 'es' ? 'Objetivos' : 'Goals')
-
-    if (data.budget) score += 10
-    else missing.push(language === 'es' ? 'Presupuesto' : 'Budget')
-
-    if (data.channels && data.channels.length > 0) score += 10
-    else missing.push(language === 'es' ? 'Canales' : 'Channels')
-
-    if (data.mainPromise) score += 10
-    else recommendations.push(language === 'es' ? 'Añade una promesa principal clara' : 'Add a clear main promise')
-
-    if (data.price) score += 5
-    else recommendations.push(language === 'es' ? 'Define el precio' : 'Define the price')
-
-    if (data.tone) score += 5
-    else recommendations.push(language === 'es' ? 'Especifica el tono de voz' : 'Specify tone of voice')
-
-    if (data.timing) score += 5
-    else recommendations.push(language === 'es' ? 'Indica el timing' : 'Indicate timing')
-
-    if (data.geography) score += 5
-    else recommendations.push(language === 'es' ? 'Define la geografía' : 'Define geography')
-
-    if (data.kpi) score += 5
-
-    const statusText = score >= 80 
-      ? (language === 'es' ? 'Excelente - Brief completo' : 'Excellent - Brief complete')
-      : score >= 50 
-        ? (language === 'es' ? 'Casi listo - Completa algunos campos' : 'Almost ready - Complete some fields')
-        : (language === 'es' ? 'Necesita más información' : 'Needs more information')
-
-    return { score, missing, recommendations, statusText }
-  }
-
-  const briefScore = calculateBriefScore()
+  const briefAnalysis = formData ? analyzeBrief(formData, brandKit) : null
 
   return (
     <>
-      <QuickQuestionsModal
-        isOpen={showQuickQuestions}
-        onClose={() => setShowQuickQuestions(false)}
-        onComplete={handleQuickQuestionsComplete}
-        questions={quickQuestions}
-        language={language}
-      />
+      {briefAnalysis && (
+        <QuickQuestionsModal
+          open={showQuickQuestions}
+          onClose={() => setShowQuickQuestions(false)}
+          questions={briefAnalysis.criticalQuestions}
+          onSubmit={handleQuickQuestionsComplete}
+          language={language}
+        />
+      )}
 
       <div className="space-y-4">
-        <BriefScoreCard 
-          score={briefScore.score}
-          missing={briefScore.missing}
-          recommendations={briefScore.recommendations}
-          statusText={briefScore.statusText}
-        />
+        {briefAnalysis && (
+          <BriefScoreCard 
+            analysis={briefAnalysis}
+            onShowQuestions={() => setShowQuickQuestions(true)}
+            language={language}
+          />
+        )}
         
         <Card className="glass-panel p-6 border-2 marketing-shine">
         <div className="mb-6">
