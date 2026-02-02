@@ -4,6 +4,15 @@
 
 Campaign Impact Hub está integrado con Microsoft Azure AI Foundry para proporcionar capacidades avanzadas de IA conversacional.
 
+### Credenciales del Agente
+
+```env
+AZURE_EXISTING_AGENT_ID="marketing-orchestrator:2"
+AZURE_ENV_NAME="agents-playground-8828"
+AZURE_LOCATION="swedencentral"
+AZURE_SUBSCRIPTION_ID="d1836173-d451-4210-b565-5cb14f7b2e7e"
+```
+
 ### Endpoints Configurados
 
 #### Proyecto Base
@@ -13,7 +22,14 @@ https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-win
 
 #### Aplicación
 ```
-marketing-orchestrator
+marketing-orchestrator:2
+```
+
+#### IDs de Recursos
+```
+AZURE_EXISTING_AIPROJECT_ENDPOINT="https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-winter"
+AZURE_EXISTING_AIPROJECT_RESOURCE_ID="/subscriptions/d1836173-d451-4210-b565-5cb14f7b2e7e/resourceGroups/rg-campaign-impact-hub/providers/Microsoft.CognitiveServices/accounts/tenerife-winter-resource/projects/tenerife-winter"
+AZURE_EXISTING_RESOURCE_ID="/subscriptions/d1836173-d451-4210-b565-5cb14f7b2e7e/resourceGroups/rg-campaign-impact-hub/providers/Microsoft.CognitiveServices/accounts/tenerife-winter-resource"
 ```
 
 #### Protocolo de Actividad

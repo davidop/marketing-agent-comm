@@ -8,17 +8,43 @@ Diseñado desde la perspectiva de una estratega senior de marketing, este sistem
 
 Campaign Impact Hub está integrado con **Microsoft Azure AI Foundry** para proporcionar capacidades avanzadas de IA conversacional y generación de contenido estratégico:
 
-### Configuración del Agente
-- **Punto de conexión del proyecto**: `https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-winter`
-- **Aplicación**: `marketing-orchestrator`
+### 🔧 Configuración del Agente
+
+**Agente**: `marketing-orchestrator:2`  
+**Proyecto**: `tenerife-winter`  
+**Región**: `swedencentral`  
+**Environment**: `agents-playground-8828`
+
+**Endpoints Principales**:
+- **Proyecto Base**: `https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-winter`
 - **API Version**: `2025-11-15-preview`
 
-### Protocolos Soportados
-1. **Activity Protocol**: Para mensajería bidireccional estructurada
-   - Endpoint: `/applications/marketing-orchestrator/protocols/activityprotocol`
-   
-2. **OpenAI Responses**: Para respuestas conversacionales compatibles con OpenAI
-   - Endpoint: `/applications/marketing-orchestrator/protocols/openai/responses`
+### 📝 Credenciales (Archivo .env.example)
+
+```bash
+# Agent Configuration
+VITE_AZURE_AGENT_ID=marketing-orchestrator:2
+VITE_AZURE_ENV_NAME=agents-playground-8828
+VITE_AZURE_LOCATION=swedencentral
+VITE_AZURE_SUBSCRIPTION_ID=d1836173-d451-4210-b565-5cb14f7b2e7e
+
+# Project Endpoints
+VITE_AZURE_AIPROJECT_ENDPOINT=https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-winter
+```
+
+> 📚 **Documentación Completa**: Ver [AGENT_SETUP.md](./AGENT_SETUP.md) para instrucciones detalladas de configuración y troubleshooting.
+
+### 🌐 Protocolos Soportados
+
+1. **Activity Protocol** - Mensajería bidireccional estructurada
+   ```
+   https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-winter/applications/marketing-orchestrator/protocols/activityprotocol?api-version=2025-11-15-preview
+   ```
+
+2. **OpenAI Responses API** - Respuestas conversacionales compatibles con OpenAI *(En uso actual)*
+   ```
+   https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-winter/applications/marketing-orchestrator/protocols/openai/responses?api-version=2025-11-15-preview
+   ```
 
 ### War Room Chat en Tiempo Real
 El **War Room Chat** integrado proporciona:
