@@ -1,11 +1,12 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ChatCircle, Sparkle, Lightning, PaperPlaneRight } from '@phosphor-icons/react'
+import { ChatCircle, Sparkle, Lightning, PaperPlaneRight, Plug, PlugsConnected } from '@phosphor-icons/react'
 import { getCopy } from '@/lib/premiumCopy'
+import { AzureAgentClient } from '@/lib/agentClient'
 
 interface WarRoomChatProps {
   language: 'es' | 'en'
@@ -30,15 +31,64 @@ const COMMANDS = [
   { cmd: '/flow-email', key: 'flowEmail' as const }
 ]
 
-const FOUNDRY_ENDPOINT = 'https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-winter'
-
 export function WarRoomChat({ language, onCommand }: WarRoomChatProps) {
   const [showCommands, setShowCommands] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isConnected, setIsConnected] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const copy = getCopy(language)
+
+  const agentClient = useMemo(() => {
+    const client = new AzureAgentClient({
+      projectEndpoint: 'https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-winter',
+      applicationName: 'marketing-orchestrator',
+      apiVersion: '2025-11-15-preview',
+      debug: true,
+      userId: `user-${Math.random().toString(16).slice(2)}`,
+      userName: 'Campaign Impact User'
+    })
+
+    client.onState((state) => {
+      setIsConnected(state === 'connected')
+    })
+
+    client.onMessage((msg) => {
+      const assistantMessage: Message = {
+        id: msg.id,
+        role: 'assistant',
+        content: msg.text,
+        timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date()
+      }
+      setMessages(prev => [...prev, assistantMessage])
+    })
+
+    client.onError((error) => {
+      console.error('Agent error:', error)
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        role: 'assistant',
+        content: language === 'es' 
+          ? `Error: ${error.message}` 
+          : `Error: ${error.message}`,
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, errorMessage])
+    })
+
+    return client
+  }, [language])
+
+  useEffect(() => {
+    agentClient.connect().catch(err => {
+      console.error('Failed to connect:', err)
+    })
+
+    return () => {
+      agentClient.disconnect()
+    }
+  }, [agentClient])
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -61,33 +111,14 @@ export function WarRoomChat({ language, onCommand }: WarRoomChatProps) {
     setIsLoading(true)
 
     try {
-      const response = await fetch(FOUNDRY_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: userMessage.content,
-          language: language
-        })
+      await agentClient.sendMessage(userMessage.content, {
+        metadata: {
+          language: language,
+          source: 'war-room-chat'
+        }
       })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const data = await response.json()
-
-      const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: data.response || data.message || 'No response',
-        timestamp: new Date()
-      }
-
-      setMessages(prev => [...prev, assistantMessage])
     } catch (error) {
-      console.error('Error sending message to Foundry:', error)
+      console.error('Error sending message:', error)
       
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
@@ -124,9 +155,18 @@ export function WarRoomChat({ language, onCommand }: WarRoomChatProps) {
           <h2 className="text-lg font-bold uppercase tracking-tight bg-gradient-to-r from-secondary via-primary to-secondary bg-clip-text text-transparent">
             {copy.warRoom.title}
           </h2>
-          <Badge variant="outline" className="ml-auto text-xs">
-            <Lightning size={12} weight="fill" className="mr-1" />
-            {copy.warRoom.premiumAI}
+          <Badge variant="outline" className="ml-auto text-xs flex items-center gap-1">
+            {isConnected ? (
+              <>
+                <PlugsConnected size={12} weight="fill" className="text-success" />
+                {language === 'es' ? 'Conectado' : 'Connected'}
+              </>
+            ) : (
+              <>
+                <Plug size={12} weight="fill" className="text-muted-foreground" />
+                {language === 'es' ? 'Conectando...' : 'Connecting...'}
+              </>
+            )}
           </Badge>
         </div>
         <p className="text-xs text-muted-foreground font-medium">
@@ -168,10 +208,24 @@ export function WarRoomChat({ language, onCommand }: WarRoomChatProps) {
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
         <div className="space-y-4">
           {messages.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8 text-sm">
-              {language === 'es' 
-                ? 'Conectado a Microsoft Foundry. Escribe un mensaje para comenzar.' 
-                : 'Connected to Microsoft Foundry. Type a message to start.'}
+            <div className="text-center py-8 space-y-2">
+              <div className="flex justify-center mb-3">
+                {isConnected ? (
+                  <PlugsConnected size={48} weight="duotone" className="text-success" />
+                ) : (
+                  <Plug size={48} weight="duotone" className="text-muted-foreground animate-pulse" />
+                )}
+              </div>
+              <p className="text-sm font-semibold">
+                {language === 'es' 
+                  ? 'Conectado a Azure AI Agent' 
+                  : 'Connected to Azure AI Agent'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {language === 'es' 
+                  ? 'Marketing Orchestrator listo. Escribe un mensaje para comenzar.' 
+                  : 'Marketing Orchestrator ready. Type a message to start.'}
+              </p>
             </div>
           ) : (
             messages.map((msg) => (

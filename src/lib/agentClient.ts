@@ -10,23 +10,31 @@ export type ConnectionState =
   | "disconnected"
   | "error";
 
-export interface AgentClientConfig {
+export interface AzureAgentConfig {
   /**
-   * Base URL of your agent gateway (recommended) or a Direct Line compatible endpoint.
-   *
-   * Example (your proxy):
-   *   https://your-domain.com/api/copilot
-   *
-   * Direct Line-style routes used by default:
-   *   POST   {baseUrl}/conversations
-   *   POST   {baseUrl}/conversations/{conversationId}/activities
-   *   GET    {baseUrl}/conversations/{conversationId}/activities?watermark=...
+   * Azure AI Foundry project endpoint base URL
+   * Example: https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-winter
    */
-  baseUrl: string;
+  projectEndpoint: string;
+
+  /**
+   * Application/agent name within the project
+   * Example: marketing-orchestrator
+   */
+  applicationName: string;
+
+  /**
+   * Azure AI API key for authentication
+   */
+  apiKey?: string;
+
+  /**
+   * API version to use
+   */
+  apiVersion?: string;
 
   /**
    * Optional: Provide a token for Authorization header.
-   * Return: "Bearer <token>" or whatever your proxy expects.
    */
   getAuthHeader?: () => Promise<string> | string;
 
@@ -36,12 +44,7 @@ export interface AgentClientConfig {
   headers?: Record<string, string>;
 
   /**
-   * Polling interval for new messages (ms). Default: 900ms.
-   */
-  pollIntervalMs?: number;
-
-  /**
-   * Abort / timeout for fetch requests (ms). Default: 20000ms.
+   * Request timeout (ms). Default: 30000ms.
    */
   requestTimeoutMs?: number;
 
@@ -59,6 +62,18 @@ export interface AgentClientConfig {
    * When true, logs helpful debug info.
    */
   debug?: boolean;
+}
+
+export interface AgentClientConfig extends Omit<AzureAgentConfig, 'projectEndpoint' | 'applicationName' | 'apiVersion'> {
+  /**
+   * Base URL of your agent gateway (recommended) or Azure AI Agent endpoint.
+   */
+  baseUrl: string;
+
+  /**
+   * Polling interval for new messages (ms). Default: 900ms.
+   */
+  pollIntervalMs?: number;
 }
 
 export interface AgentActivity {
@@ -141,6 +156,203 @@ class Emitter<T> {
   }
   clear() {
     this.listeners.clear();
+  }
+}
+
+export class AzureAgentClient {
+  private projectEndpoint: string;
+  private applicationName: string;
+  private apiVersion: string;
+  private apiKey?: string;
+  private getAuthHeader?: () => Promise<string> | string;
+  private headers: Record<string, string>;
+  private requestTimeoutMs: number;
+  private userId: string;
+  private userName: string;
+  private debug: boolean;
+
+  private state: ConnectionState = "idle";
+  private sessionId: string | null = null;
+
+  private stateEmitter = new Emitter<ConnectionState>();
+  private messageEmitter = new Emitter<AgentMessage>();
+  private rawEmitter = new Emitter<AgentActivity>();
+  private errorEmitter = new Emitter<Error>();
+
+  constructor(config: AzureAgentConfig) {
+    this.projectEndpoint = config.projectEndpoint.replace(/\/+$/, "");
+    this.applicationName = config.applicationName;
+    this.apiVersion = config.apiVersion ?? "2025-11-15-preview";
+    this.apiKey = config.apiKey;
+    this.getAuthHeader = config.getAuthHeader;
+    this.headers = config.headers ?? {};
+    this.requestTimeoutMs = config.requestTimeoutMs ?? 30000;
+    this.userId = config.userId ?? `user-${Math.random().toString(16).slice(2)}`;
+    this.userName = config.userName ?? "Guest";
+    this.debug = config.debug ?? false;
+  }
+
+  private getActivityProtocolUrl(): string {
+    return `${this.projectEndpoint}/applications/${this.applicationName}/protocols/activityprotocol?api-version=${this.apiVersion}`;
+  }
+
+  private getResponsesUrl(): string {
+    return `${this.projectEndpoint}/applications/${this.applicationName}/protocols/openai/responses?api-version=${this.apiVersion}`;
+  }
+
+  // ---------- Public subscriptions ----------
+  onState(cb: (s: ConnectionState) => void): Unsubscribe {
+    return this.stateEmitter.on(cb);
+  }
+  onMessage(cb: (m: AgentMessage) => void): Unsubscribe {
+    return this.messageEmitter.on(cb);
+  }
+  onRawActivity(cb: (a: AgentActivity) => void): Unsubscribe {
+    return this.rawEmitter.on(cb);
+  }
+  onError(cb: (e: Error) => void): Unsubscribe {
+    return this.errorEmitter.on(cb);
+  }
+
+  getState() {
+    return this.state;
+  }
+
+  getSessionId() {
+    return this.sessionId;
+  }
+
+  // ---------- Lifecycle ----------
+  async connect(): Promise<void> {
+    if (this.state === "connected" || this.state === "connecting") return;
+
+    this.setState("connecting");
+
+    try {
+      this.sessionId = `session-${Math.random().toString(16).slice(2)}-${Date.now()}`;
+      this.setState("connected");
+      this.log("Connected with session ID:", this.sessionId);
+    } catch (err: any) {
+      const e = err instanceof Error ? err : new Error(String(err));
+      this.setState("error");
+      this.errorEmitter.emit(e);
+      throw e;
+    }
+  }
+
+  async disconnect(): Promise<void> {
+    this.sessionId = null;
+    this.setState("disconnected");
+  }
+
+  /**
+   * Send a message using Azure AI Agent OpenAI responses endpoint
+   */
+  async sendMessage(
+    text: string,
+    opts?: { context?: any; metadata?: Record<string, any> }
+  ): Promise<string> {
+    if (!this.sessionId) {
+      await this.connect();
+    }
+
+    try {
+      const url = this.getResponsesUrl();
+      const headers = await this.authHeaders();
+
+      this.log("POST", url, { message: text, context: opts?.context });
+
+      const body = {
+        messages: [
+          {
+            role: "user",
+            content: text,
+          },
+        ],
+        ...(opts?.context ? { context: opts.context } : {}),
+        ...(opts?.metadata ? { metadata: opts.metadata } : {}),
+      };
+
+      const res = await fetchWithTimeout(
+        url,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify(body),
+        },
+        this.requestTimeoutMs
+      );
+
+      if (!res.ok) {
+        const errorText = await res.text().catch(() => "");
+        this.log("Error response:", res.status, errorText);
+        throw new Error(`Azure AI request failed: ${res.status} ${errorText}`);
+      }
+
+      const data = await res.json();
+      this.log("Response data:", data);
+
+      let responseText = "";
+      
+      if (data.choices && data.choices.length > 0) {
+        responseText = data.choices[0].message?.content || "";
+      } else if (data.message) {
+        responseText = data.message;
+      } else if (data.content) {
+        responseText = data.content;
+      } else if (typeof data === "string") {
+        responseText = data;
+      }
+
+      if (!responseText) {
+        responseText = "No response from agent";
+      }
+
+      const assistantMessage: AgentMessage = {
+        id: `assistant-${Date.now()}`,
+        role: "assistant",
+        text: responseText,
+        timestamp: nowIso(),
+        raw: data,
+      };
+
+      this.messageEmitter.emit(assistantMessage);
+
+      return responseText;
+    } catch (err: any) {
+      const e = err instanceof Error ? err : new Error(String(err));
+      this.errorEmitter.emit(e);
+      throw e;
+    }
+  }
+
+  // ---------- Core HTTP ----------
+  private async authHeaders(): Promise<Record<string, string>> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...this.headers,
+    };
+
+    if (this.apiKey) {
+      headers["api-key"] = this.apiKey;
+    }
+
+    if (this.getAuthHeader) {
+      const v = await this.getAuthHeader();
+      if (v) headers["Authorization"] = v;
+    }
+
+    return headers;
+  }
+
+  private log(...args: any[]) {
+    if (this.debug) console.log("[AzureAgentClient]", ...args);
+  }
+
+  private setState(s: ConnectionState) {
+    if (this.state === s) return;
+    this.state = s;
+    this.stateEmitter.emit(s);
   }
 }
 

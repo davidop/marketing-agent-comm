@@ -1,8 +1,40 @@
 # Campaign Impact Hub
 
-**Sistema de planificación estratégica de campañas de marketing digital orientado a performance y brand.**
+**Sistema de planificación estratégica de campañas de marketing digital orientado a performance y brand, potenciado por Azure AI Agent.**
 
 Diseñado desde la perspectiva de una estratega senior de marketing, este sistema convierte briefs en **campañas ejecutables, específicas y coherentes con la marca**. No genera textos bonitos, genera planes accionables con KPIs claros, responsables definidos y next steps concretos.
+
+## 🤖 Integración con Azure AI Agent
+
+Campaign Impact Hub está integrado con **Microsoft Azure AI Foundry** para proporcionar capacidades avanzadas de IA conversacional y generación de contenido estratégico:
+
+### Configuración del Agente
+- **Punto de conexión del proyecto**: `https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-winter`
+- **Aplicación**: `marketing-orchestrator`
+- **API Version**: `2025-11-15-preview`
+
+### Protocolos Soportados
+1. **Activity Protocol**: Para mensajería bidireccional estructurada
+   - Endpoint: `/applications/marketing-orchestrator/protocols/activityprotocol`
+   
+2. **OpenAI Responses**: Para respuestas conversacionales compatibles con OpenAI
+   - Endpoint: `/applications/marketing-orchestrator/protocols/openai/responses`
+
+### War Room Chat en Tiempo Real
+El **War Room Chat** integrado proporciona:
+- 🔌 **Conexión persistente** con el agente Azure AI
+- 💬 **Chat conversacional** para refinar campañas
+- ⚡ **Comandos rápidos** como `/mejora-hooks`, `/más-premium`, `/regenera-bloque`
+- 🎯 **Contexto automático** de la campaña actual
+- 🔄 **Regeneración selectiva** de bloques de contenido
+- 📊 **Insights estratégicos** basados en el brief y Brand Kit
+
+El agente actúa como un estratega senior que:
+- Analiza briefs y calcula Brief Scores
+- Genera contenido modular y coherente con la marca
+- Revisa consistencia y seguridad del contenido
+- Evalúa riesgos legales y claims no verificables
+- Propone mejoras basadas en el Brand Kit
 
 ## 🎯 Filosofía Estratégica
 
