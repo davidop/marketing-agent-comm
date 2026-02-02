@@ -41,10 +41,17 @@ export function WarRoomChat({ language, onCommand }: WarRoomChatProps) {
   const copy = getCopy(language)
 
   const agentClient = useMemo(() => {
+    const projectEndpoint = import.meta.env.VITE_AZURE_AIPROJECT_ENDPOINT || 
+      'https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-winter'
+    const agentId = import.meta.env.VITE_AZURE_AGENT_ID || 'marketing-orchestrator:2'
+    const applicationName = agentId.split(':')[0] || 'marketing-orchestrator'
+    const apiKey = import.meta.env.VITE_AZURE_API_KEY
+    
     const client = new AzureAgentClient({
-      projectEndpoint: 'https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-winter',
-      applicationName: 'marketing-orchestrator',
+      projectEndpoint,
+      applicationName,
       apiVersion: '2025-11-15-preview',
+      apiKey: apiKey || undefined,
       debug: true,
       userId: `user-${Math.random().toString(16).slice(2)}`,
       userName: 'Campaign Impact User'

@@ -6,14 +6,15 @@ Diseñado desde la perspectiva de una estratega senior de marketing, este sistem
 
 ## 🤖 Integración con Azure AI Agent
 
-Campaign Impact Hub está integrado con **Microsoft Azure AI Foundry** para proporcionar capacidades avanzadas de IA conversacional y generación de contenido estratégico:
+Campaign Impact Hub está integrado con **Microsoft Azure AI Foundry (Microsoft Foundry)** para proporcionar capacidades avanzadas de IA conversacional y generación de contenido estratégico:
 
 ### 🔧 Configuración del Agente
 
 **Agente**: `marketing-orchestrator:2`  
 **Proyecto**: `tenerife-winter`  
-**Región**: `swedencentral`  
-**Environment**: `agents-playground-8828`
+**Región**: `swedencentral` (Sweden Central)  
+**Environment**: `agents-playground-8828`  
+**Hospedado en**: Microsoft Foundry
 
 **Endpoints Principales**:
 - **Proyecto Base**: `https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-winter`

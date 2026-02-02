@@ -2,7 +2,7 @@
 
 ## 🔌 Configuración del Agente
 
-Campaign Impact Hub está integrado con Microsoft Azure AI Foundry para proporcionar capacidades avanzadas de IA conversacional.
+Campaign Impact Hub está integrado con **Microsoft Azure AI Foundry** (Microsoft Foundry) para proporcionar capacidades avanzadas de IA conversacional a través del agente **Marketing Orchestrator**.
 
 ### Credenciales del Agente
 
@@ -15,34 +15,53 @@ AZURE_SUBSCRIPTION_ID="d1836173-d451-4210-b565-5cb14f7b2e7e"
 
 ### Endpoints Configurados
 
-#### Proyecto Base
+#### Proyecto Base (Microsoft Foundry)
 ```
 https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-winter
 ```
+
+**Hospedado en**: Microsoft Foundry  
+**Región**: Sweden Central  
+**Ambiente**: agents-playground-8828
 
 #### Aplicación
 ```
 marketing-orchestrator:2
 ```
 
-#### IDs de Recursos
-```
+#### IDs de Recursos de Azure
+```env
 AZURE_EXISTING_AIPROJECT_ENDPOINT="https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-winter"
 AZURE_EXISTING_AIPROJECT_RESOURCE_ID="/subscriptions/d1836173-d451-4210-b565-5cb14f7b2e7e/resourceGroups/rg-campaign-impact-hub/providers/Microsoft.CognitiveServices/accounts/tenerife-winter-resource/projects/tenerife-winter"
 AZURE_EXISTING_RESOURCE_ID="/subscriptions/d1836173-d451-4210-b565-5cb14f7b2e7e/resourceGroups/rg-campaign-impact-hub/providers/Microsoft.CognitiveServices/accounts/tenerife-winter-resource"
+AZD_ALLOW_NON_EMPTY_FOLDER=true
 ```
 
-#### Protocolo de Actividad
+#### Punto de conexión del Protocolo de Actividad
 ```
 https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-winter/applications/marketing-orchestrator/protocols/activityprotocol?api-version=2025-11-15-preview
 ```
 
-#### API de Respuestas OpenAI
+**Uso**: Para comunicación bidireccional mediante el protocolo de actividad (Activity Protocol).
+
+#### Punto de conexión de la API de Respuestas (OpenAI Compatible)
 ```
 https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-winter/applications/marketing-orchestrator/protocols/openai/responses?api-version=2025-11-15-preview
 ```
 
+**Uso**: Para comunicación compatible con API de OpenAI. **Este es el endpoint actualmente utilizado** por WarRoomChat.
+
 ## 🏗️ Arquitectura de la Integración
+
+### Sobre Microsoft Foundry
+
+Microsoft Foundry es la plataforma de hospedaje para agentes de Azure AI, proporcionando:
+
+- **Escalabilidad automática**: El agente escala según la demanda
+- **Alta disponibilidad**: SLA empresarial con redundancia geográfica
+- **Seguridad integrada**: Autenticación Azure AD y cifrado de datos
+- **Monitoreo**: Telemetría y logs en tiempo real
+- **Multi-región**: Actualmente desplegado en Sweden Central
 
 ### Cliente Azure AI (`AzureAgentClient`)
 
@@ -53,10 +72,25 @@ const client = new AzureAgentClient({
   projectEndpoint: 'https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-winter',
   applicationName: 'marketing-orchestrator',
   apiVersion: '2025-11-15-preview',
-  apiKey: 'YOUR_API_KEY', // Opcional
+  apiKey: import.meta.env.VITE_AZURE_API_KEY, // Opcional - para desarrollo
   debug: true
 })
 ```
+
+### Variables de Entorno
+
+Las credenciales se configuran mediante variables de entorno (archivo `.env`):
+
+```env
+# Agent Configuration
+VITE_AZURE_AGENT_ID=marketing-orchestrator:2
+VITE_AZURE_AIPROJECT_ENDPOINT=https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-winter
+
+# Optional: API Key for development
+VITE_AZURE_API_KEY=your-api-key-here
+```
+
+El componente `WarRoomChat` lee estas variables automáticamente y se conecta al agente correcto.
 
 ### Características
 
