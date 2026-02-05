@@ -8,9 +8,10 @@ import { BrandKitEditor } from '@/components/BrandKitEditor'
 import { CampaignDashboard } from '@/components/CampaignDashboard'
 import { VariationLab } from '@/components/VariationLab'
 import { WarRoomChat } from '@/components/WarRoomChat'
+import { WarRoomCommandCenter } from '@/components/WarRoomCommandCenter'
 import { ContentSafetyReviewer } from '@/components/ContentSafetyReviewer'
 import { OrchestratorDemo } from '@/components/OrchestratorDemo'
-import { FileText, Palette, Sparkle, Lightning, ShieldCheck, Robot } from '@phosphor-icons/react'
+import { FileText, Palette, Sparkle, Lightning, ShieldCheck, Robot, Crosshair } from '@phosphor-icons/react'
 import type { Language } from '@/lib/i18n'
 import type { CampaignBriefData, CampaignOutput, CopyVariation, BrandKit, FlowSequence, ContentCalendarItem } from '@/lib/types'
 
@@ -1426,8 +1427,12 @@ ${isSpanish ? 'Devuelve un objeto JSON con una propiedad "variations" que conten
         />
         
         <main className="container mx-auto px-4 py-6">
-          <Tabs defaultValue="campaign" className="w-full">
+          <Tabs defaultValue="warroom" className="w-full">
             <TabsList className="glass-panel mb-6 border-2 rounded-xl p-1 w-fit mx-auto">
+              <TabsTrigger value="warroom" className="text-sm font-bold rounded-lg px-6 py-2 data-[state=active]:neon-glow">
+                <Crosshair size={18} weight="fill" className="mr-2" />
+                {language === 'es' ? 'War Room' : 'War Room'}
+              </TabsTrigger>
               <TabsTrigger value="campaign" className="text-sm font-bold rounded-lg px-6 py-2 data-[state=active]:neon-glow">
                 <Lightning size={18} weight="fill" className="mr-2" />
                 {language === 'es' ? 'Campaña' : 'Campaign'}
@@ -1449,6 +1454,10 @@ ${isSpanish ? 'Devuelve un objeto JSON con una propiedad "variations" que conten
                 {language === 'es' ? 'Safety Review' : 'Safety Review'}
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="warroom" className="mt-0">
+              <WarRoomCommandCenter />
+            </TabsContent>
 
             <TabsContent value="campaign" className="mt-0">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
