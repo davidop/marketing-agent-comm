@@ -154,10 +154,62 @@ Chat con **comandos estratégicos**:
 - `/paid-pack` → Nuevo paid pack
 - `/flow-email` → Nueva secuencia de email
 
+### Proxy Backend para Azure Foundry 🔒 NEW
+
+Campaign Impact Hub incluye un **proxy backend seguro** para integración con Microsoft Foundry:
+
+- **🔐 Seguridad**: API key de Foundry nunca se expone en el frontend
+- **🌐 CORS**: Evita problemas de CORS al hacer llamadas desde el servidor
+- **📊 Control**: Logging, rate limiting y validación centralizados
+
+#### Opciones de Deployment
+
+1. **Vercel** (Serverless Functions) - `api/run.js`
+2. **Netlify** (Functions) - `netlify/functions/run.js`
+3. **Node.js Express** (Traditional) - `server.js`
+4. **Docker** - Containerización completa
+5. **Azure App Service** - Integración nativa con Azure
+
+#### Quick Start
+
+```bash
+# Verificar configuración
+npm run check
+
+# Iniciar proxy local
+npm run proxy
+
+# Iniciar frontend + proxy simultáneamente
+npm run dev:all
+
+# Test del proxy
+npm run test:proxy
+```
+
+#### Variables de Entorno
+
+**Frontend (.env)**:
+```bash
+VITE_USE_PROXY=true
+VITE_FOUNDRY_ENDPOINT=https://tenerife-winter-resource.services.ai.azure.com/...
+```
+
+**Backend (servidor)**:
+```bash
+FOUNDRY_API_KEY=tu-api-key-de-azure
+```
+
+> 📚 **Guías Completas**:
+> - [PROXY_BACKEND_GUIDE.md](./PROXY_BACKEND_GUIDE.md) - Implementación técnica
+> - [DEPLOYMENT_PROXY.md](./DEPLOYMENT_PROXY.md) - Deployment en diferentes plataformas
+> - [api/README.md](./api/README.md) - Documentación del proxy
+
 ## 🛠 Stack Tecnológico
 
 - **Frontend**: React 19 + TypeScript
 - **Build Tool**: Vite
+- **Backend Proxy**: Express.js / Serverless Functions
+- **AI Integration**: Microsoft Azure AI Foundry
 - **Componentes UI**: GitHub Spark + Radix UI
 - **Styling**: Tailwind CSS 4
 - **State Management**: TanStack React Query
