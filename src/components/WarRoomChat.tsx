@@ -28,10 +28,8 @@ export function WarRoomChat({ language }: WarRoomChatProps) {
   const [briefText, setBriefText] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [foundryLogs, setFoundryLogs] = useState<LogEntry[]>([])
-  const [lastPayload, setLastPayload] = useState<string>('')
   const [lastResponse, setLastResponse] = useState<string>('')
   const [currentBrief] = useKV<CampaignBriefData>('campaign-brief-data')
-  const [copiedPayload, setCopiedPayload] = useState(false)
   const [copiedResponse, setCopiedResponse] = useState(false)
   const { selectedBrief, clearSelectedBrief } = useBriefStore()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -95,8 +93,6 @@ export function WarRoomChat({ language }: WarRoomChatProps) {
       }
     }
 
-    setLastPayload(JSON.stringify(payload, null, 2))
-    
     const mode = import.meta.env.VITE_USE_PROXY !== 'false' ? 'Proxy' : 'Direct'
     addLog(
       language === 'es' 
@@ -185,13 +181,6 @@ export function WarRoomChat({ language }: WarRoomChatProps) {
       e.preventDefault()
       handleGenerateCampaign()
     }
-  }
-
-  const handleCopyPayload = () => {
-    navigator.clipboard.writeText(lastPayload)
-    setCopiedPayload(true)
-    toast.success(language === 'es' ? 'Payload copiado' : 'Payload copied')
-    setTimeout(() => setCopiedPayload(false), 2000)
   }
 
   const handleCopyResponse = () => {
@@ -304,38 +293,21 @@ export function WarRoomChat({ language }: WarRoomChatProps) {
               : (language === 'es' ? 'Generar Campaña' : 'Generate Campaign')}
           </Button>
 
-          {(lastPayload || lastResponse) && (
+          {lastResponse && (
             <div className="flex gap-2">
-              {lastPayload && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyPayload}
-                  className="flex-1 text-xs"
-                >
-                  {copiedPayload ? (
-                    <CheckCircle size={14} weight="fill" className="mr-1" />
-                  ) : (
-                    <Copy size={14} className="mr-1" />
-                  )}
-                  {language === 'es' ? 'Copiar Payload' : 'Copy Payload'}
-                </Button>
-              )}
-              {lastResponse && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyResponse}
-                  className="flex-1 text-xs"
-                >
-                  {copiedResponse ? (
-                    <CheckCircle size={14} weight="fill" className="mr-1" />
-                  ) : (
-                    <Copy size={14} className="mr-1" />
-                  )}
-                  {language === 'es' ? 'Copiar Respuesta' : 'Copy Response'}
-                </Button>
-              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyResponse}
+                className="flex-1 text-xs"
+              >
+                {copiedResponse ? (
+                  <CheckCircle size={14} weight="fill" className="mr-1" />
+                ) : (
+                  <Copy size={14} className="mr-1" />
+                )}
+                {language === 'es' ? 'Copiar Respuesta' : 'Copy Response'}
+              </Button>
             </div>
           )}
         </div>
@@ -392,10 +364,10 @@ export function WarRoomChat({ language }: WarRoomChatProps) {
         </ScrollArea>
       </div>
 
-      {(lastPayload || lastResponse) && (
+      {lastResponse && (
         <div className="p-3 border-t-2 border-border/50 bg-muted/20">
           <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">
-            {language === 'es' ? 'Debug: Usa los botones arriba para copiar payload/respuesta' : 'Debug: Use buttons above to copy payload/response'}
+            {language === 'es' ? 'Debug: Usa el botón arriba para copiar la respuesta' : 'Debug: Use button above to copy response'}
           </p>
         </div>
       )}
