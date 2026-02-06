@@ -282,15 +282,19 @@ async function runViaAzureAgent(
 
     const messageData = await messageResponse.json()
     
-    // Extract assistant response
-    const assistantMessages = messageData.messages.filter((m: any) => m.role === 'assistant')
+    # Extract assistant response
+    assistantMessages = messageData.messages.filter((m: any) => m.role === 'assistant')
     const assistantResponse = assistantMessages.length > 0 
       ? assistantMessages[assistantMessages.length - 1].content 
-      : 'No response from agent'
+      : ''
+    
+    if (!assistantResponse && messageData.run_status === 'completed') {
+      console.warn('Agent run completed but no assistant response received')
+    }
 
     // Return in Foundry format
     return {
-      summary: assistantResponse,
+      summary: assistantResponse || 'No response from agent (run status: ' + messageData.run_status + ')',
       threadId: threadId,
       runId: messageData.run_id,
       runStatus: messageData.run_status,

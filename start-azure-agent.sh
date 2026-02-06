@@ -12,6 +12,14 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
+# Recommend virtual environment
+if [ -z "$VIRTUAL_ENV" ]; then
+    echo "⚠️  Warning: Not running in a virtual environment"
+    echo "   It's recommended to create one with: python3 -m venv venv && source venv/bin/activate"
+    echo "   Press Ctrl+C to cancel or wait 5 seconds to continue..."
+    sleep 5
+fi
+
 # Check if dependencies are installed
 if ! python3 -c "import flask" &> /dev/null; then
     echo "📦 Installing Python dependencies..."
@@ -21,18 +29,20 @@ fi
 
 # Check if .env file exists
 if [ ! -f .env ]; then
-    echo "⚠️  Warning: .env file not found. Creating template..."
-    cat > .env << EOF
-# Azure AI Agent Configuration
-AZURE_AIPROJECT_ENDPOINT=https://tenerife-winter-resource.services.ai.azure.com/api/projects/tenerife-winter
-AZURE_AGENT_ID=asst_nJy3ICZrtfnUcpcldqpiEBTQ
-AZURE_AGENT_PORT=5001
-
-# Frontend Configuration
-VITE_USE_AZURE_AGENT=true
-VITE_AZURE_AGENT_BACKEND=http://localhost:5001
-EOF
-    echo "✅ Created .env file. Please configure your Azure credentials."
+    echo "⚠️  Warning: .env file not found"
+    echo "   Please copy .env.example to .env and configure your credentials:"
+    echo "   cp .env.example .env"
+    echo ""
+    read -p "Do you want to create a basic .env file now? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        cp .env.example .env
+        echo "✅ Created .env file from template. Please configure your Azure credentials."
+        echo "   Edit .env and add your Azure endpoint and agent ID."
+    else
+        echo "❌ Cannot continue without .env file. Exiting."
+        exit 1
+    fi
     echo ""
 fi
 

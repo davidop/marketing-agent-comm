@@ -36,7 +36,13 @@ This integration connects the **Foundry Workflow** component in the Campaign Imp
 - **Node.js 18+** (required for frontend)
 - **Azure CLI** (optional, for authentication)
 
-Note: The npm scripts use `python3` command. On some systems, you may need to create an alias: `alias python3=python`
+Note: The npm scripts use `python3` command. On Windows systems, you may need to use `python` instead of `python3`.
+
+**Recommended**: Use a Python virtual environment to avoid conflicts:
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
 ### 1. Install Python Dependencies
 

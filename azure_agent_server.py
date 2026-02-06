@@ -174,9 +174,13 @@ def list_messages():
 
 if __name__ == '__main__':
     port = int(os.getenv('AZURE_AGENT_PORT', 5001))
-    debug_mode = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    # Parse debug mode - accepts: 'true', 'True', '1', 'yes', 'Yes'
+    debug_env = os.getenv('FLASK_DEBUG', 'false').lower()
+    debug_mode = debug_env in ('true', '1', 'yes')
     print(f"🚀 Starting Azure AI Agent Server on port {port}")
     print(f"   Endpoint: {AZURE_ENDPOINT}")
     print(f"   Agent ID: {AGENT_ID}")
     print(f"   Debug mode: {debug_mode}")
+    if debug_mode:
+        print("   ⚠️  WARNING: Debug mode is enabled. Do not use in production!")
     app.run(host='0.0.0.0', port=port, debug=debug_mode)
