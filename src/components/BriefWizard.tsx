@@ -15,7 +15,6 @@ import { Lightning, CaretDown, Check, CheckCircle, ArrowRight, ArrowLeft, Info, 
 import { cn } from '@/lib/utils'
 import BriefScoreCard from '@/components/BriefScoreCard'
 import { QuickQuestionsModal } from '@/components/QuickQuestionsModal'
-import DemoBriefSelector from '@/components/DemoBriefSelector'
 import { analyzeBrief } from '@/lib/briefAnalyzer'
 import type { CampaignBriefData, BrandKit } from '@/lib/types'
 
@@ -859,10 +858,6 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
   }
 
   const briefAnalysis = formData ? analyzeBrief(formData, brandKit) : null
-  
-  const handleDemoBriefSelected = (briefData: CampaignBriefData, brandKitData: BrandKit) => {
-    setFormData(() => briefData)
-  }
 
   return (
     <>
@@ -877,11 +872,6 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
       )}
 
       <div className="space-y-4">
-        <DemoBriefSelector 
-          onBriefSelected={handleDemoBriefSelected}
-          language={language}
-        />
-
         {briefAnalysis && (
           <BriefScoreCard 
             analysis={briefAnalysis}
