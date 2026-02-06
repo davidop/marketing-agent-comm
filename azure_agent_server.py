@@ -174,7 +174,9 @@ def list_messages():
 
 if __name__ == '__main__':
     port = int(os.getenv('AZURE_AGENT_PORT', 5001))
+    debug_mode = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
     print(f"🚀 Starting Azure AI Agent Server on port {port}")
     print(f"   Endpoint: {AZURE_ENDPOINT}")
     print(f"   Agent ID: {AGENT_ID}")
-    app.run(host='0.0.0.0', port=port, debug=True)
+    print(f"   Debug mode: {debug_mode}")
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)

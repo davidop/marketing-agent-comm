@@ -30,6 +30,14 @@ This integration connects the **Foundry Workflow** component in the Campaign Imp
 
 ## Quick Start
 
+### Prerequisites
+
+- **Python 3.8+** (required for backend)
+- **Node.js 18+** (required for frontend)
+- **Azure CLI** (optional, for authentication)
+
+Note: The npm scripts use `python3` command. On some systems, you may need to create an alias: `alias python3=python`
+
 ### 1. Install Python Dependencies
 
 ```bash
