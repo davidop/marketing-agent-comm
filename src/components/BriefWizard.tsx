@@ -16,6 +16,10 @@ import { cn } from '@/lib/utils'
 import BriefScoreCard from '@/components/BriefScoreCard'
 import { QuickQuestionsModal } from '@/components/QuickQuestionsModal'
 import { analyzeBrief } from '@/lib/briefAnalyzer'
+import { ProgressStepper } from '@/components/ProgressStepper'
+import { ValidatedInput, ValidatedTextarea } from '@/components/ValidatedInput'
+import { LoadingState } from '@/components/LoadingState'
+import { commonRules } from '@/hooks/use-field-validation'
 import type { CampaignBriefData, BrandKit } from '@/lib/types'
 
 interface BriefWizardProps {
@@ -72,6 +76,7 @@ const DEMO_DATA: CampaignBriefData = {
 
 export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardProps) {
   const [currentStep, setCurrentStep] = useState(0)
+  const [completedSteps, setCompletedSteps] = useState<number[]>([])
   const [isChannelOpen, setIsChannelOpen] = useState(false)
   const [showQuickQuestions, setShowQuickQuestions] = useState(false)
   const [brandKit] = useKV<BrandKit>('brand-kit-v2')
@@ -222,6 +227,18 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
     return true
   }
 
+  const handleStepChange = (newStep: number) => {
+    if (newStep > currentStep && canProceed()) {
+      setCompletedSteps(prev => {
+        if (!prev.includes(currentStep)) {
+          return [...prev, currentStep]
+        }
+        return prev
+      })
+    }
+    setCurrentStep(newStep)
+  }
+
   const handleSubmit = () => {
     if (!formData) return
     
@@ -351,7 +368,7 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
                   : 'Example: "Generate 500 MQLs in 3 months with CPL < €50" - Be specific with numbers'
                 )}
               </div>
-              <Textarea
+              <ValidatedTextarea
                 id="kpi"
                 value={formData.kpi}
                 onChange={(e) => handleChange('kpi', e.target.value)}
@@ -359,8 +376,13 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
                   ? 'ej., Generar 500 MQLs en 3 meses con CPL < €50'
                   : 'e.g., Generate 500 MQLs in 3 months with CPL < €50'
                 }
-                className="glass-panel-hover resize-none border-2 rounded-xl"
                 rows={3}
+                required
+                rules={[
+                  commonRules.required(language === 'es' ? 'El KPI es requerido' : 'KPI is required'),
+                  commonRules.minLength(10, language === 'es' ? 'El KPI debe ser más específico (mín. 10 caracteres)' : 'KPI must be more specific (min. 10 characters)')
+                ]}
+                helperText={language === 'es' ? 'Incluye métricas numéricas específicas' : 'Include specific numeric metrics'}
               />
             </div>
           </div>
@@ -577,7 +599,7 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
                   : 'Example: "Only solution that unifies on-premise, AWS, GCP and Azure from a single panel"'
                 )}
               </div>
-              <Textarea
+              <ValidatedTextarea
                 id="usp"
                 value={formData.usp}
                 onChange={(e) => handleChange('usp', e.target.value)}
@@ -585,8 +607,14 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
                   ? 'ej., Única solución que unifica gestión multi-cloud'
                   : 'e.g., Only solution that unifies multi-cloud management'
                 }
-                className="glass-panel-hover resize-none border-2 rounded-xl"
                 rows={3}
+                required
+                rules={[
+                  commonRules.required(language === 'es' ? 'El USP es requerido' : 'USP is required'),
+                  commonRules.minLength(15, language === 'es' ? 'El USP debe ser más específico (mín. 15 caracteres)' : 'USP must be more specific (min. 15 characters)')
+                ]}
+                warning={formData.usp && formData.usp.length < 30 ? (language === 'es' ? 'Considera añadir más detalles para diferenciarte mejor' : 'Consider adding more details to better differentiate') : undefined}
+                helperText={language === 'es' ? 'Qué hace que tu oferta sea única' : 'What makes your offer unique'}
               />
             </div>
           </div>
@@ -949,21 +977,13 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            {steps.map((step, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border-2 transition-all",
-                  idx < currentStep ? "bg-primary text-primary-foreground border-primary" :
-                  idx === currentStep ? "bg-accent text-accent-foreground border-accent" :
-                  "bg-muted text-muted-foreground border-muted"
-                )}>
-                  {idx < currentStep ? <CheckCircle size={20} weight="fill" /> : idx + 1}
-                </div>
-                <span className="text-xs font-bold hidden md:block">{step}</span>
-              </div>
-            ))}
-          </div>
+          <ProgressStepper
+            steps={steps}
+            currentStep={currentStep}
+            completedSteps={completedSteps}
+            onStepClick={handleStepChange}
+            className="mb-6"
+          />
         </div>
 
         <div className="space-y-6">
@@ -974,7 +994,7 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setCurrentStep(prev => prev - 1)}
+                onClick={() => handleStepChange(currentStep - 1)}
                 className="flex-1 rounded-xl border-2"
               >
                 <ArrowLeft size={18} weight="bold" />
@@ -985,7 +1005,7 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
             {currentStep < steps.length - 1 ? (
               <Button
                 type="button"
-                onClick={() => setCurrentStep(prev => prev + 1)}
+                onClick={() => handleStepChange(currentStep + 1)}
                 disabled={!canProceed()}
                 className="flex-1 rounded-xl border-2"
               >
@@ -1000,7 +1020,11 @@ export function BriefWizard({ onGenerate, isGenerating, language }: BriefWizardP
                 className="flex-1 neon-glow-accent font-bold uppercase tracking-wider rounded-xl py-6 border-2 border-accent/50"
               >
                 {isGenerating ? (
-                  <span className="animate-pulse">{language === 'es' ? 'Generando...' : 'Generating...'}</span>
+                  <LoadingState 
+                    variant="generation"
+                    message={language === 'es' ? 'Generando campaña...' : 'Generating campaign...'}
+                    className="p-0"
+                  />
                 ) : (
                   <>
                     <Lightning size={20} weight="fill" className="sparkle-animate" />
