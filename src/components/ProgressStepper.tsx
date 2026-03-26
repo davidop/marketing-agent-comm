@@ -1,51 +1,51 @@
 import { Check } from '@phosphor-icons/react'
-import { cn } from '@/lib/utils'
 
-interface ProgressStepperProps {
-  steps: string[]
-  currentStep: number
+
+  onStepClick?: (stepIndex: numb
+  className?: str
+
   onStepClick?: (stepIndex: number) => void
   completedSteps?: number[]
   className?: string
 }
 
 export function ProgressStepper({
-  steps,
-  currentStep,
-  onStepClick,
-  completedSteps = [],
-  className
-}: ProgressStepperProps) {
-  const isStepCompleted = (stepIndex: number) => completedSteps.includes(stepIndex)
-  const isStepCurrent = (stepIndex: number) => stepIndex === currentStep
-  const isStepAccessible = (stepIndex: number) => stepIndex <= currentStep || completedSteps.includes(stepIndex)
-
-  return (
-    <div className={cn("w-full", className)}>
-      <div className="relative flex items-center justify-between">
-        {steps.map((step, index) => {
-          const completed = isStepCompleted(index)
-          const current = isStepCurrent(index)
-          const accessible = isStepAccessible(index)
-          
+      <d
+          cons
+          cons
           return (
-            <div key={index} className="flex-1 relative flex flex-col items-center">
-              {index > 0 && (
-                <div 
-                  className={cn(
-                    "absolute top-5 -left-1/2 right-1/2 h-0.5 transition-all duration-500",
+           
+                  classNam
                     completed || (current && completedSteps.includes(index - 1))
-                      ? "bg-primary shadow-[0_0_8px_rgba(var(--primary),0.6)]"
                       : "bg-border"
-                  )}
                   style={{ width: '100%', transform: 'translateY(-50%)' }}
-                />
-              )}
-              
-              <button
-                onClick={() => accessible && onStepClick?.(index)}
+
+          
                 disabled={!accessible}
-                className={cn(
+                  "relative z-10 w-10 h-10 rounded-full border-2 f
+                  completed && "bg-pr
+                  !current && !completed && access
+                )}
+                {completed ? (
+          
+                  
+                  )}>
+                  </span>
+              </butto
+              <span className={c
+                current && "text-primary font-bold",
+                !current && !completed && accessible && "text-foreground/60",
+              )}>
+              </span>
+          )
+      </div>
+  )
+
+
+
+
+
+
                   "relative z-10 w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all duration-300 mb-2",
                   "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
                   completed && "bg-primary border-primary text-primary-foreground shadow-[0_0_12px_rgba(var(--primary),0.5)]",
@@ -77,8 +77,8 @@ export function ProgressStepper({
               </span>
             </div>
           )
-        })}
-      </div>
-    </div>
-  )
-}
+
+
+
+
+
