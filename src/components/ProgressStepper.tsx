@@ -1,9 +1,9 @@
 import { Check } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 
+interface ProgressStepperProps {
+  steps: string[]
   currentStep: number
-  completedSteps?
-}
   onStepClick?: (stepIndex: number) => void
   completedSteps?: number[]
   className?: string
@@ -32,7 +32,7 @@ export function ProgressStepper({
                   completed || (current && completedSteps.includes(index - 1))
                     ? "bg-primary"
                     : "bg-border"
-                <s
+                )}
                 style={{ width: '100%', transform: 'translateY(-50%)', left: '-50%', zIndex: 0 }}
               />
             )}
@@ -74,5 +74,5 @@ export function ProgressStepper({
         )
       })}
     </div>
-
+  )
 }
