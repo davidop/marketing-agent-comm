@@ -11,7 +11,7 @@ Campaign Impact Hub está integrado con **Microsoft Azure AI Foundry (Microsoft 
 ### 🔧 Configuración del Agente
 
 **Agente**: `marketing-orchestrator:2`  
-**Proyecto**: `tenerife-winter`  
+**Proyecto**: `AgentCamp-Malaga`  
 **Región**: `swedencentral` (Sweden Central)  
 **Environment**: `agents-playground-8828`  
 **Hospedado en**: Microsoft Foundry
