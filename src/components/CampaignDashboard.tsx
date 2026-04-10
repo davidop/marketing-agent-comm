@@ -1,47 +1,47 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Button } from '@/components/ui/button'
 import { OutputCard } from '@/components/OutputCard'
 import { CampaignOverview } from '@/components/CampaignOverview'
 import { CreativeRoutesDisplay } from '@/components/CreativeRoutesDisplay'
-import FunnelBlueprint from '@/components/FunnelBlueprint'
+import { FunnelBlueprint } from '@/components/FunnelBlueprint'
 import { PaidPack } from '@/components/PaidPack'
 import LandingKitDisplay from '@/components/LandingKitDisplay'
 import { ContentCalendarDisplay } from '@/components/ContentCalendarDisplay'
 import FlowsDisplay from '@/components/FlowsDisplay'
-import MeasurementUtmsDisplay from '@/components/MeasurementUtmsDisplay'
+import { MeasurementUtmsDisplay } from '@/components/MeasurementUtmsDisplay'
 import { RisksAssumptionsDisplay } from '@/components/RisksAssumptionsDisplay'
-import ExecutionChecklistDisplay from '@/components/ExecutionChecklistDisplay'
+import { ExecutionChecklistDisplay } from '@/components/ExecutionChecklistDisplay'
 import { EmptyState } from '@/components/EmptyState'
 import { CampaignExport } from '@/components/CampaignExport'
 import { getCopy } from '@/lib/premiumCopy'
-import { 
+import {
   Eye,
-  Target,
   Palette,
   Funnel,
   CurrencyDollar,
-  Desktop,
   CalendarBlank,
-  EnvelopeSimple,
   Flask,
-  ChartLineUp,
+  ChartLine,
   Warning,
   CheckSquare,
   Sparkle,
-  Export
+  Target,
+  Desktop,
+  Export,
+  EnvelopeSimple,
+  ChatCircleDots
 } from '@phosphor-icons/react'
-import type { CampaignOutput, ContentCalendarItem, CreativeRoute, FunnelPhase, PaidPackData, LandingKitData, FlowSequence, RisksAssumptionsData, ExecutionChecklistData } from '@/lib/types'
+import type { CampaignOutput } from '@/lib/types'
+import type { Language } from '@/lib/i18n'
 
 interface CampaignDashboardProps {
   outputs: Partial<CampaignOutput>
   isGenerating: boolean
-  language: 'es' | 'en'
-  onRegenerateBlock?: (blockName: keyof CampaignOutput) => void
+  language: Language
+  onRegenerateBlock?: (blockName: string) => void
 }
 
 export function CampaignDashboard({
@@ -51,333 +51,302 @@ export function CampaignDashboard({
   onRegenerateBlock
 }: CampaignDashboardProps) {
   const [activeTab, setActiveTab] = useState('overview')
+  const [versions, setVersions] = useState<Record<string, string[]>>({})
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
-  const [versions, setVersions] = useKV<Record<string, string[]>>('output-versions', {})
-  const copy = getCopy(language)
 
-  const t = (es: string, en: string) => language === 'es' ? es : en
+  const t = getCopy(language)
 
   const handleSaveVersion = (blockName: string, content: string) => {
-    setVersions((current) => {
-      const blockVersions = (current || {})[blockName] || []
+    setVersions((prev) => {
       return {
-        ...(current || {}),
-        [blockName]: [...blockVersions, content]
+        ...prev,
+        [blockName]: [...(prev[blockName] || []), content]
       }
     })
   }
 
-  const hasCampaignData = outputs.overview || outputs.strategy || outputs.creativeRoutes || outputs.funnelBlueprint
-
   return (
-    <div className="w-full">
-      {hasCampaignData && (
-        <div className="mb-4 flex justify-end">
-          <Button onClick={() => setExportDialogOpen(true)} className="gap-2">
-            <Export size={18} weight="fill" />
+    <div className="space-y-4">
+      <div className="glass-panel p-4 rounded-xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold">{t('Campaign Output', 'Campaign Output')}</h2>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setExportDialogOpen(true)}
+            disabled={!outputs || Object.keys(outputs).length === 0}
+          >
+            <Export size={18} weight="bold" className="mr-2" />
             {t('Exportar', 'Export')}
           </Button>
-          <CampaignExport 
-            outputs={outputs} 
-            language={language} 
-            open={exportDialogOpen}
-            onOpenChange={setExportDialogOpen}
-          />
         </div>
-      )}
-      
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <ScrollArea className="w-full">
-          <TabsList className="glass-panel mb-6 border-2 rounded-xl p-1 inline-flex w-auto">
-            <TabsTrigger value="overview" className="text-xs font-semibold rounded-lg px-4 py-2">
-              <Eye size={16} weight="fill" className="mr-2" />
-              {t('Overview', 'Overview')}
-            </TabsTrigger>
-            <TabsTrigger value="strategy" className="text-xs font-semibold rounded-lg px-4 py-2">
-              <Target size={16} weight="fill" className="mr-2" />
-              {t('Estrategia', 'Strategy')}
-            </TabsTrigger>
-            <TabsTrigger value="creative" className="text-xs font-semibold rounded-lg px-4 py-2">
-              <Palette size={16} weight="fill" className="mr-2" />
-              {t('Rutas Creativas', 'Creative Routes')}
-            </TabsTrigger>
-            <TabsTrigger value="funnel" className="text-xs font-semibold rounded-lg px-4 py-2">
-              <Funnel size={16} weight="fill" className="mr-2" />
-              {t('Funnel', 'Funnel')}
-            </TabsTrigger>
-            <TabsTrigger value="paid" className="text-xs font-semibold rounded-lg px-4 py-2">
-              <CurrencyDollar size={16} weight="fill" className="mr-2" />
-              {t('Paid Pack', 'Paid Pack')}
-            </TabsTrigger>
-            <TabsTrigger value="landing" className="text-xs font-semibold rounded-lg px-4 py-2">
-              <Desktop size={16} weight="fill" className="mr-2" />
-              {t('Landing Kit', 'Landing Kit')}
-            </TabsTrigger>
-            <TabsTrigger value="calendar" className="text-xs font-semibold rounded-lg px-4 py-2">
-              <CalendarBlank size={16} weight="fill" className="mr-2" />
-              {t('Calendario', 'Calendar')}
-            </TabsTrigger>
-            <TabsTrigger value="flows" className="text-xs font-semibold rounded-lg px-4 py-2">
-              <EnvelopeSimple size={16} weight="fill" className="mr-2" />
-              {t('Flows', 'Flows')}
-            </TabsTrigger>
-            <TabsTrigger value="experiments" className="text-xs font-semibold rounded-lg px-4 py-2">
-              <Flask size={16} weight="fill" className="mr-2" />
-              {t('Experimentos', 'Experiments')}
-            </TabsTrigger>
-            <TabsTrigger value="measurement" className="text-xs font-semibold rounded-lg px-4 py-2">
-              <ChartLineUp size={16} weight="fill" className="mr-2" />
-              {t('Medición', 'Measurement')}
-            </TabsTrigger>
-            <TabsTrigger value="risks" className="text-xs font-semibold rounded-lg px-4 py-2">
-              <Warning size={16} weight="fill" className="mr-2" />
-              {t('Riesgos', 'Risks')}
-            </TabsTrigger>
-            <TabsTrigger value="checklist" className="text-xs font-semibold rounded-lg px-4 py-2">
-              <CheckSquare size={16} weight="fill" className="mr-2" />
-              {t('Checklist', 'Checklist')}
-            </TabsTrigger>
-          </TabsList>
-        </ScrollArea>
 
-        <TabsContent value="overview" className="mt-0">
-          {outputs.overview ? (
-            <CampaignOverview 
-              data={outputs.overview}
-              language={language}
-            />
-          ) : (
-            <EmptyState
-              icon={<Sparkle size={56} weight="duotone" className="text-primary" />}
-              title={copy.campaignDashboard.emptyState.title}
-              subtitle={copy.campaignDashboard.emptyState.subtitle}
-              actionLabel={copy.campaignDashboard.emptyState.cta}
-            />
-          )}
-        </TabsContent>
+        <CampaignExport
+          outputs={outputs}
+          open={exportDialogOpen}
+          onOpenChange={setExportDialogOpen}
+          language={language}
+        />
 
-        <TabsContent value="strategy" className="mt-0">
-          <OutputCard
-            title={t('Estrategia de Campaña', 'Campaign Strategy')}
-            icon={<Target size={20} weight="fill" />}
-            content={outputs.strategy || ''}
-            isLoading={isGenerating}
-            emptyMessage={t('La estrategia se generará aquí', 'Strategy will be generated here')}
-            language={language}
-            onRegenerate={() => onRegenerateBlock?.('strategy')}
-            onSaveVersion={(content) => handleSaveVersion('strategy', content)}
-            blockName="strategy"
-          />
-        </TabsContent>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <ScrollArea className="w-full whitespace-nowrap pb-2">
+            <TabsList className="inline-flex w-auto gap-2">
+              <TabsTrigger value="overview" className="flex items-center gap-2">
+                <Target size={16} weight="fill" className="shrink-0" />
+                <span>{t('Overview', 'Overview')}</span>
+              </TabsTrigger>
+              <TabsTrigger value="strategy" className="flex items-center gap-2">
+                <Eye size={16} weight="fill" className="shrink-0" />
+                <span>{t('Estrategia', 'Strategy')}</span>
+              </TabsTrigger>
+              <TabsTrigger value="creative" className="flex items-center gap-2">
+                <Palette size={16} weight="fill" className="shrink-0" />
+                <span>{t('Creative', 'Creative')}</span>
+              </TabsTrigger>
+              <TabsTrigger value="funnel" className="flex items-center gap-2">
+                <Funnel size={16} weight="fill" className="shrink-0" />
+                <span>{t('Funnel', 'Funnel')}</span>
+              </TabsTrigger>
+              <TabsTrigger value="paid" className="flex items-center gap-2">
+                <CurrencyDollar size={16} weight="fill" className="shrink-0" />
+                <span>{t('Paid Media', 'Paid Media')}</span>
+              </TabsTrigger>
+              <TabsTrigger value="flows" className="flex items-center gap-2">
+                <EnvelopeSimple size={16} weight="fill" className="shrink-0" />
+                <span>{t('Flows', 'Flows')}</span>
+              </TabsTrigger>
+              <TabsTrigger value="experiments" className="flex items-center gap-2">
+                <Flask size={16} weight="fill" className="shrink-0" />
+                <span>{t('Experimentos', 'Experiments')}</span>
+              </TabsTrigger>
+              <TabsTrigger value="measurement" className="flex items-center gap-2">
+                <ChartLine size={16} weight="fill" className="shrink-0" />
+                <span>{t('Medición', 'Measurement')}</span>
+              </TabsTrigger>
+            </TabsList>
+          </ScrollArea>
 
-        <TabsContent value="creative" className="mt-0">
-          {Array.isArray(outputs.creativeRoutes) ? (
-            <CreativeRoutesDisplay
-              routes={outputs.creativeRoutes}
-              language={language}
-              isLoading={isGenerating}
-            />
-          ) : (
+          <TabsContent value="overview" className="mt-4">
+            {outputs.overview ? (
+              <CampaignOverview data={outputs.overview} language={language} />
+            ) : (
+              <EmptyState
+                icon={<Sparkle size={56} weight="duotone" />}
+                title={t('No hay overview', 'No overview')}
+                subtitle={t('El overview se generará aquí', 'Overview will be generated here')}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="strategy" className="mt-4">
             <OutputCard
-              title={t('Rutas Creativas', 'Creative Routes')}
-              icon={<Palette size={20} weight="fill" />}
-              content={outputs.creativeRoutes || ''}
-              isLoading={isGenerating}
-              emptyMessage={t('Las rutas creativas se generarán aquí', 'Creative routes will be generated here')}
-              language={language}
-              onRegenerate={() => onRegenerateBlock?.('creativeRoutes')}
-              onSaveVersion={(content) => handleSaveVersion('creativeRoutes', content)}
-              blockName="creativeRoutes"
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="funnel" className="mt-0">
-          {Array.isArray(outputs.funnelBlueprint) ? (
-            <FunnelBlueprint phases={outputs.funnelBlueprint} language={language} />
-          ) : (
-            <OutputCard
-              title={t('Blueprint del Funnel', 'Funnel Blueprint')}
-              icon={<Funnel size={20} weight="fill" />}
-              content={outputs.funnelBlueprint || ''}
-              isLoading={isGenerating}
-              emptyMessage={t('El funnel se generará aquí', 'Funnel will be generated here')}
-              language={language}
-              onRegenerate={() => onRegenerateBlock?.('funnelBlueprint')}
-              onSaveVersion={(content) => handleSaveVersion('funnelBlueprint', content)}
-              blockName="funnelBlueprint"
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="paid" className="mt-0">
-          {typeof outputs.paidPack === 'object' && outputs.paidPack !== null ? (
-            <PaidPack
-              data={outputs.paidPack as PaidPackData}
+              title={t('Estrategia de Comunicación', 'Communication Strategy')}
+              content={outputs.strategy || ''}
+              emptyMessage={t('La estrategia se generará aquí', 'Strategy will be generated here')}
               isLoading={isGenerating}
               language={language}
-              onRegenerate={() => onRegenerateBlock?.('paidPack')}
+              onRegenerate={() => onRegenerateBlock?.('strategy')}
+              onSaveVersion={(content) => handleSaveVersion('strategy', content)}
+              blockName="strategy"
             />
-          ) : (
-            <OutputCard
-              title={t('Pack de Paid Media', 'Paid Media Pack')}
-              icon={<CurrencyDollar size={20} weight="fill" />}
-              content={typeof outputs.paidPack === 'string' ? outputs.paidPack : ''}
-              isLoading={isGenerating}
-              emptyMessage={t('El pack de paid media se generará aquí', 'Paid media pack will be generated here')}
-              language={language}
-              onRegenerate={() => onRegenerateBlock?.('paidPack')}
-              onSaveVersion={(content) => handleSaveVersion('paidPack', content)}
-              blockName="paidPack"
-            />
-          )}
-        </TabsContent>
+          </TabsContent>
 
-        <TabsContent value="landing" className="mt-0">
-          {typeof outputs.landingKit === 'object' && outputs.landingKit !== null ? (
-            <Card className="glass-panel p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Desktop size={20} weight="fill" className="text-primary" />
-                  <h3 className="text-lg font-bold">
-                    {t('Landing Page Kit', 'Landing Page Kit')}
-                  </h3>
-                </div>
-              </div>
-              <LandingKitDisplay data={outputs.landingKit as LandingKitData} language={language} />
-            </Card>
-          ) : (
-            <OutputCard
-              title={t('Landing Page Kit', 'Landing Page Kit')}
-              icon={<Desktop size={20} weight="fill" />}
-              content={typeof outputs.landingKit === 'string' ? outputs.landingKit : ''}
-              isLoading={isGenerating}
-              emptyMessage={t('El landing kit se generará aquí', 'Landing kit will be generated here')}
-              language={language}
-              onRegenerate={() => onRegenerateBlock?.('landingKit')}
-              onSaveVersion={(content) => handleSaveVersion('landingKit', content)}
-              blockName="landingKit"
-            />
-          )}
-        </TabsContent>
+          <TabsContent value="creative" className="mt-4">
+            {outputs.creativeRoutes && Array.isArray(outputs.creativeRoutes) ? (
+              <CreativeRoutesDisplay
+                routes={outputs.creativeRoutes}
+                language={language}
+              />
+            ) : (
+              <OutputCard
+                icon={<Palette size={20} weight="duotone" />}
+                title={t('Rutas Creativas', 'Creative Routes')}
+                content={typeof outputs.creativeRoutes === 'string' ? outputs.creativeRoutes : ''}
+                emptyMessage={t('Las rutas creativas se generarán aquí', 'Creative routes will be generated here')}
+                isLoading={isGenerating}
+                language={language}
+                onRegenerate={() => onRegenerateBlock?.('creativeRoutes')}
+                onSaveVersion={(content) => handleSaveVersion('creativeRoutes', content)}
+                blockName="creativeRoutes"
+              />
+            )}
+          </TabsContent>
 
-        <TabsContent value="calendar" className="mt-0">
-          <ContentCalendarDisplay 
-            items={outputs.contentCalendar || []} 
-            language={language}
-          />
-        </TabsContent>
+          <TabsContent value="funnel" className="mt-4">
+            {outputs.funnelBlueprint && Array.isArray(outputs.funnelBlueprint) ? (
+              <FunnelBlueprint phases={outputs.funnelBlueprint} language={language} />
+            ) : (
+              <OutputCard
+                icon={<Funnel size={20} weight="duotone" />}
+                title={t('Blueprint de Funnel', 'Funnel Blueprint')}
+                content={typeof outputs.funnelBlueprint === 'string' ? outputs.funnelBlueprint : ''}
+                emptyMessage={t('El funnel blueprint se generará aquí', 'Funnel blueprint will be generated here')}
+                isLoading={isGenerating}
+                language={language}
+                onRegenerate={() => onRegenerateBlock?.('funnelBlueprint')}
+                onSaveVersion={(content) => handleSaveVersion('funnelBlueprint', content)}
+                blockName="funnelBlueprint"
+              />
+            )}
+          </TabsContent>
 
-        <TabsContent value="flows" className="mt-0">
-          {outputs.flows && outputs.flows.length > 0 ? (
-            <FlowsDisplay flows={outputs.flows} language={language} />
-          ) : (
+          <TabsContent value="paid" className="mt-4">
             <div className="space-y-6">
-              <OutputCard
-                title={t('Flow de Email', 'Email Flow')}
-                icon={<EnvelopeSimple size={20} weight="fill" />}
-                content={outputs.emailFlow || ''}
-                isLoading={isGenerating}
-                emptyMessage={t('El flow de email se generará aquí', 'Email flow will be generated here')}
-                language={language}
-                onRegenerate={() => onRegenerateBlock?.('emailFlow')}
-                onSaveVersion={(content) => handleSaveVersion('emailFlow', content)}
-                blockName="emailFlow"
-              />
+              {outputs.paidPack && typeof outputs.paidPack === 'object' ? (
+                <PaidPack
+                  data={outputs.paidPack}
+                  language={language}
+                  isLoading={isGenerating}
+                  onRegenerate={() => onRegenerateBlock?.('paidPack')}
+                />
+              ) : (
+                <OutputCard
+                  title={t('Pack de Paid Media', 'Paid Media Pack')}
+                  content={typeof outputs.paidPack === 'string' ? outputs.paidPack : ''}
+                  emptyMessage={t('El pack de paid media se generará aquí', 'Paid media pack will be generated here')}
+                  isLoading={isGenerating}
+                  language={language}
+                  onRegenerate={() => onRegenerateBlock?.('paidPack')}
+                  onSaveVersion={(content) => handleSaveVersion('paidPack', content)}
+                  blockName="paidPack"
+                />
+              )}
 
-              <OutputCard
-                title={t('Flow de WhatsApp', 'WhatsApp Flow')}
-                icon={<EnvelopeSimple size={20} weight="fill" />}
-                content={outputs.whatsappFlow || ''}
-                isLoading={isGenerating}
-                emptyMessage={t('El flow de WhatsApp se generará aquí', 'WhatsApp flow will be generated here')}
-                language={language}
-                onRegenerate={() => onRegenerateBlock?.('whatsappFlow')}
-                onSaveVersion={(content) => handleSaveVersion('whatsappFlow', content)}
-                blockName="whatsappFlow"
-              />
+              {outputs.landingKit && typeof outputs.landingKit === 'object' ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Desktop size={24} weight="duotone" className="text-primary" />
+                    <h3 className="text-lg font-bold">
+                      {t('Landing Page Kit', 'Landing Page Kit')}
+                    </h3>
+                  </div>
+                  <LandingKitDisplay data={outputs.landingKit} language={language} />
+                </div>
+              ) : (
+                <OutputCard
+                  title={t('Landing Page Kit', 'Landing Page Kit')}
+                  content={typeof outputs.landingKit === 'string' ? outputs.landingKit : ''}
+                  emptyMessage={t('El landing kit se generará aquí', 'Landing kit will be generated here')}
+                  isLoading={isGenerating}
+                  language={language}
+                  onRegenerate={() => onRegenerateBlock?.('landingKit')}
+                  onSaveVersion={(content) => handleSaveVersion('landingKit', content)}
+                  blockName="landingKit"
+                />
+              )}
+
+              {outputs.contentCalendar && Array.isArray(outputs.contentCalendar) && outputs.contentCalendar.length > 0 ? (
+                <ContentCalendarDisplay
+                  items={outputs.contentCalendar}
+                  language={language}
+                />
+              ) : null}
             </div>
-          )}
-        </TabsContent>
+          </TabsContent>
 
-        <TabsContent value="experiments" className="mt-0">
-          <OutputCard
-            title={t('Plan de Experimentos', 'Experiment Plan')}
-            icon={<Flask size={20} weight="fill" />}
-            content={outputs.experimentPlan || ''}
-            isLoading={isGenerating}
-            emptyMessage={t('El plan de experimentos se generará aquí', 'Experiment plan will be generated here')}
-            language={language}
-            onRegenerate={() => onRegenerateBlock?.('experimentPlan')}
-            onSaveVersion={(content) => handleSaveVersion('experimentPlan', content)}
-            blockName="experimentPlan"
-          />
-        </TabsContent>
+          <TabsContent value="flows" className="mt-4">
+            {outputs.flows && Array.isArray(outputs.flows) ? (
+              <FlowsDisplay flows={outputs.flows} language={language} />
+            ) : (
+              <div className="space-y-6">
+                <OutputCard
+                  title={t('Flow de Email', 'Email Flow')}
+                  content={outputs.emailFlow || ''}
+                  emptyMessage={t('El flow de email se generará aquí', 'Email flow will be generated here')}
+                  isLoading={isGenerating}
+                  language={language}
+                  onRegenerate={() => onRegenerateBlock?.('emailFlow')}
+                  onSaveVersion={(content) => handleSaveVersion('emailFlow', content)}
+                  blockName="emailFlow"
+                />
+                <OutputCard
+                  title={t('Flow de WhatsApp', 'WhatsApp Flow')}
+                  content={outputs.whatsappFlow || ''}
+                  emptyMessage={t('El flow de WhatsApp se generará aquí', 'WhatsApp flow will be generated here')}
+                  isLoading={isGenerating}
+                  language={language}
+                  onRegenerate={() => onRegenerateBlock?.('whatsappFlow')}
+                  onSaveVersion={(content) => handleSaveVersion('whatsappFlow', content)}
+                  blockName="whatsappFlow"
+                />
+              </div>
+            )}
+          </TabsContent>
 
-        <TabsContent value="measurement" className="mt-0">
-          {typeof outputs.measurementUtms === 'object' && outputs.measurementUtms !== null ? (
-            <MeasurementUtmsDisplay 
-              data={outputs.measurementUtms}
-              language={language}
-            />
-          ) : (
+          <TabsContent value="experiments" className="mt-4">
             <OutputCard
-              title={t('Medición y UTMs', 'Measurement & UTMs')}
-              icon={<ChartLineUp size={20} weight="fill" />}
-              content={outputs.measurementUtms || ''}
+              title={t('Plan de Experimentación', 'Experimentation Plan')}
+              content={outputs.experimentPlan || ''}
+              emptyMessage={t('El plan de experimentación se generará aquí', 'Experimentation plan will be generated here')}
               isLoading={isGenerating}
-              emptyMessage={t('El sistema de medición se generará aquí', 'Measurement system will be generated here')}
               language={language}
-              onRegenerate={() => onRegenerateBlock?.('measurementUtms')}
-              onSaveVersion={(content) => handleSaveVersion('measurementUtms', content)}
-              blockName="measurementUtms"
+              onRegenerate={() => onRegenerateBlock?.('experimentPlan')}
+              onSaveVersion={(content) => handleSaveVersion('experimentPlan', content)}
+              blockName="experimentPlan"
             />
-          )}
-        </TabsContent>
+          </TabsContent>
 
-        <TabsContent value="risks" className="mt-0">
-          {typeof outputs.risks === 'object' && outputs.risks !== null ? (
-            <RisksAssumptionsDisplay
-              data={outputs.risks as RisksAssumptionsData}
-              language={language}
-              isLoading={isGenerating}
-            />
-          ) : (
-            <OutputCard
-              title={t('Riesgos y Supuestos', 'Risks & Assumptions')}
-              icon={<Warning size={20} weight="fill" />}
-              content={outputs.risks || ''}
-              isLoading={isGenerating}
-              emptyMessage={t('Los riesgos se generarán aquí', 'Risks will be generated here')}
-              language={language}
-              onRegenerate={() => onRegenerateBlock?.('risks')}
-              onSaveVersion={(content) => handleSaveVersion('risks', content)}
-              blockName="risks"
-            />
-          )}
-        </TabsContent>
+          <TabsContent value="measurement" className="mt-4">
+            <div className="space-y-6">
+              {outputs.measurementUtms && typeof outputs.measurementUtms === 'object' ? (
+                <MeasurementUtmsDisplay
+                  data={outputs.measurementUtms}
+                  language={language}
+                />
+              ) : (
+                <OutputCard
+                  title={t('Medición y UTMs', 'Measurement & UTMs')}
+                  content={typeof outputs.measurementUtms === 'string' ? outputs.measurementUtms : ''}
+                  emptyMessage={t('El sistema de medición se generará aquí', 'Measurement system will be generated here')}
+                  isLoading={isGenerating}
+                  language={language}
+                  onRegenerate={() => onRegenerateBlock?.('measurementUtms')}
+                  onSaveVersion={(content) => handleSaveVersion('measurementUtms', content)}
+                  blockName="measurementUtms"
+                />
+              )}
 
-        <TabsContent value="checklist" className="mt-0">
-          {outputs.executionChecklist && typeof outputs.executionChecklist === 'object' ? (
-            <ExecutionChecklistDisplay 
-              data={outputs.executionChecklist as ExecutionChecklistData} 
-              language={language}
-            />
-          ) : (
-            <OutputCard
-              title={t('Checklist de Ejecución', 'Execution Checklist')}
-              icon={<CheckSquare size={20} weight="fill" />}
-              content={typeof outputs.executionChecklist === 'string' ? outputs.executionChecklist : ''}
-              isLoading={isGenerating}
-              emptyMessage={t('El checklist se generará aquí', 'Checklist will be generated here')}
-              language={language}
-              onRegenerate={() => onRegenerateBlock?.('executionChecklist')}
-              onSaveVersion={(content) => handleSaveVersion('executionChecklist', content)}
-              blockName="executionChecklist"
-            />
-          )}
-        </TabsContent>
-      </Tabs>
+              {outputs.risks && typeof outputs.risks === 'object' ? (
+                <RisksAssumptionsDisplay
+                  data={outputs.risks}
+                  isLoading={isGenerating}
+                  language={language}
+                />
+              ) : (
+                <OutputCard
+                  title={t('Riesgos y Supuestos', 'Risks & Assumptions')}
+                  content={typeof outputs.risks === 'string' ? outputs.risks : ''}
+                  emptyMessage={t('Los riesgos y supuestos se generarán aquí', 'Risks and assumptions will be generated here')}
+                  isLoading={isGenerating}
+                  language={language}
+                  onRegenerate={() => onRegenerateBlock?.('risks')}
+                  onSaveVersion={(content) => handleSaveVersion('risks', content)}
+                  blockName="risks"
+                />
+              )}
+
+              {outputs.executionChecklist && typeof outputs.executionChecklist === 'object' ? (
+                <ExecutionChecklistDisplay
+                  data={outputs.executionChecklist}
+                  language={language}
+                />
+              ) : (
+                <OutputCard
+                  icon={<CheckSquare size={20} weight="duotone" />}
+                  title={t('Checklist de Ejecución', 'Execution Checklist')}
+                  content={typeof outputs.executionChecklist === 'string' ? outputs.executionChecklist : ''}
+                  emptyMessage={t('El checklist de ejecución se generará aquí', 'Execution checklist will be generated here')}
+                  isLoading={isGenerating}
+                  language={language}
+                  onRegenerate={() => onRegenerateBlock?.('executionChecklist')}
+                  onSaveVersion={(content) => handleSaveVersion('executionChecklist', content)}
+                  blockName="executionChecklist"
+                />
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   )
 }
