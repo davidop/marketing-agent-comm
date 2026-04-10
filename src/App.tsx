@@ -1463,15 +1463,15 @@ ${isSpanish ? 'Devuelve un objeto JSON con una propiedad "variations" que conten
             <TabsContent value="campaign" className="mt-0">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-3 space-y-6">
+                  <BriefWizard 
+                    onGenerate={handleGenerateCampaign}
+                    isGenerating={isGenerating}
+                    language={language || 'es'}
+                  />
                   <DemoBriefSelector
                     onBriefSelected={(briefData) => {
                       setCurrentBrief(() => briefData)
                     }}
-                    language={language || 'es'}
-                  />
-                  <BriefWizard 
-                    onGenerate={handleGenerateCampaign}
-                    isGenerating={isGenerating}
                     language={language || 'es'}
                   />
                 </div>
