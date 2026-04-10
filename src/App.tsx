@@ -12,6 +12,7 @@ import { WarRoomCommandCenter } from '@/components/WarRoomCommandCenter'
 import { ContentSafetyReviewer } from '@/components/ContentSafetyReviewer'
 import { OrchestratorDemo } from '@/components/OrchestratorDemo'
 import DemoBriefSelector from '@/components/DemoBriefSelector'
+import { DraggableSectionWrapper } from '@/components/DraggableSectionWrapper'
 import { FileText, Palette, Sparkle, Lightning, ShieldCheck, Robot, Crosshair } from '@phosphor-icons/react'
 import type { Language } from '@/lib/i18n'
 import type { CampaignBriefData, CampaignOutput, CopyVariation, BrandKit, FlowSequence, ContentCalendarItem } from '@/lib/types'
@@ -37,6 +38,9 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [outputs, setOutputs] = useKV<Partial<CampaignOutput>>('campaign-outputs-v2', {})
   const [copyVariations, setCopyVariations] = useKV<CopyVariation[]>('copy-variations', [])
+  
+  const [leftColumnOrder, setLeftColumnOrder] = useKV<string[]>('left-column-order', ['brief-wizard', 'demo-brief'])
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null)
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -1408,6 +1412,37 @@ ${isSpanish ? 'Devuelve un objeto JSON con una propiedad "variations" que conten
     }
   }
 
+  const handleReorder = (dragIndex: number, dropIndex: number) => {
+    const newOrder = [...(leftColumnOrder || [])]
+    const [removed] = newOrder.splice(dragIndex, 1)
+    newOrder.splice(dropIndex, 0, removed)
+    setLeftColumnOrder(() => newOrder)
+  }
+
+  const renderLeftColumnSection = (sectionId: string) => {
+    switch (sectionId) {
+      case 'brief-wizard':
+        return (
+          <BriefWizard 
+            onGenerate={handleGenerateCampaign}
+            isGenerating={isGenerating}
+            language={language || 'es'}
+          />
+        )
+      case 'demo-brief':
+        return (
+          <DemoBriefSelector
+            onBriefSelected={(briefData) => {
+              setCurrentBrief(() => briefData)
+            }}
+            language={language || 'es'}
+          />
+        )
+      default:
+        return null
+    }
+  }
+
   return (
     <div className="min-h-screen gradient-bg relative overflow-hidden">
       <Toaster />
@@ -1463,17 +1498,19 @@ ${isSpanish ? 'Devuelve un objeto JSON con una propiedad "variations" que conten
             <TabsContent value="campaign" className="mt-0">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-3 space-y-6">
-                  <BriefWizard 
-                    onGenerate={handleGenerateCampaign}
-                    isGenerating={isGenerating}
-                    language={language || 'es'}
-                  />
-                  <DemoBriefSelector
-                    onBriefSelected={(briefData) => {
-                      setCurrentBrief(() => briefData)
-                    }}
-                    language={language || 'es'}
-                  />
+                  {(leftColumnOrder || []).map((sectionId, index) => (
+                    <DraggableSectionWrapper
+                      key={sectionId}
+                      sectionId={sectionId}
+                      index={index}
+                      onReorder={handleReorder}
+                      isDragging={draggingIndex === index}
+                      onDragStart={setDraggingIndex}
+                      onDragEnd={() => setDraggingIndex(null)}
+                    >
+                      {renderLeftColumnSection(sectionId)}
+                    </DraggableSectionWrapper>
+                  ))}
                 </div>
                 
                 <div className="lg:col-span-6">
