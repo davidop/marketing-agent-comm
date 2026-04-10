@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Brush } from 'recharts'
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { ArrowsOut, ArrowsIn, ArrowClockwise, DownloadSimple, Funnel } from '@phosphor-icons/react'
 
 interface ChartDataPoint {
@@ -11,8 +11,8 @@ interface ChartDataPoint {
 
 interface InteractiveChartProps {
   title: string
+  data: ChartDataPoint[]
   type?: 'bar' | 'line'
-  yAxisKeys?: string[]
   xAxisKey?: string
   yAxisKeys?: string[]
   colors?: string[]
@@ -20,15 +20,15 @@ interface InteractiveChartProps {
   enableZoom?: boolean
   enableFilter?: boolean
   language?: 'es' | 'en'
- 
+}
 
 const DEFAULT_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
 
 export function InteractiveChart({
-  langua
+  title,
   data,
   type = 'bar',
-
+  xAxisKey = 'name',
   yAxisKeys = [],
   colors = DEFAULT_COLORS,
   categories = [],
@@ -49,44 +49,43 @@ export function InteractiveChart({
     })
   }, [data, selectedCategories, enableFilter, categories])
 
-        return prev.filter(c => c !=
+  const zoomedData = useMemo(() => {
     if (!brushDomain) return filteredData
     const [startIndex, endIndex] = brushDomain
-    document.body.removeChild(link)
-    toast.success(isSpanish ? 'Da
+    return filteredData.slice(startIndex, endIndex + 1)
+  }, [filteredData, brushDomain])
 
   const handleZoomIn = () => {
-    <Card className="glass-panel p-6 space-y-4">
+    setZoomLevel(prev => Math.min(prev + 20, 200))
   }
 
-              ? `${zoomedData.l
-          </p>
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 20, 50))
   }
 
-              <Button
-                size=
-                disabled
-   
+  const handleResetZoom = () => {
+    setZoomLevel(100)
+    setBrushDomain(null)
+  }
 
-                size="sm"
-                disabled={zoomLevel
-                <ArrowsIn />
-              <Button
-              
-              >
-       
+  const handleCategoryToggle = (category: string) => {
+    setSelectedCategories(prev => {
+      if (prev.includes(category)) {
+        return prev.filter(c => c !== category)
+      }
+      return [...prev, category]
     })
-   
+  }
 
-            <DownloadSimple />
+  const handleSelectAll = () => {
     setSelectedCategories([...categories])
+  }
 
-
-            <div className="flex it
+  const handleDeselectAll = () => {
     setSelectedCategories([])
-   
+  }
 
-                variant="ghost"
+  const exportChartData = () => {
     const headers = [xAxisKey, ...yAxisKeys]
     const csvContent = [
       headers.join(','),
@@ -98,27 +97,24 @@ export function InteractiveChart({
       })
     ].join('\n')
 
-                className="text-xs"
-                {category}
-            ))}
-    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `${title.replace(/\s+/g, '_')}_data.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    toast.success(isSpanish ? 'Datos exportados correctamente' : 'Data exported successfully')
+  }
 
-        <ResponsiveContainer>
-            <BarChart
-    
-              <CartesianGrid stroke
-                
-                textAnchor="end"
-
-              <YAxis tick={{ fontSize: 12 }} />
-   
-
-                  padding: '8px 12px'
+  const chartHeight = 300 + (zoomLevel - 100) * 2
 
   return (
-                  key={key}
-                  fill={colors[index % colors.length]}
-              ))}
+    <Card className="glass-panel p-6 space-y-4">
+      <div className="flex items-start justify-between">
+        <div>
           <h3 className="text-lg font-bold mb-1">{title}</h3>
           <p className="text-sm text-muted-foreground">
             {isSpanish
@@ -221,99 +217,61 @@ export function InteractiveChart({
                 dataKey={xAxisKey}
                 angle={-45}
                 textAnchor="end"
-
                 tick={{ fontSize: 12 }}
-
+              />
               <YAxis tick={{ fontSize: 12 }} />
-
+              <Tooltip
                 contentStyle={{
-
-
+                  backgroundColor: 'var(--popover)',
+                  border: '1px solid var(--border)',
                   borderRadius: '8px',
                   padding: '8px 12px'
                 }}
-
+              />
               <Legend wrapperStyle={{ paddingTop: '20px' }} />
               {yAxisKeys.map((key, index) => (
                 <Bar
-
-
+                  key={key}
+                  dataKey={key}
                   fill={colors[index % colors.length]}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                />
+              ))}
+            </BarChart>
+          ) : (
+            <LineChart
+              data={zoomedData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <XAxis
+                dataKey={xAxisKey}
+                angle={-45}
+                textAnchor="end"
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'var(--popover)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '8px',
+                  padding: '8px 12px'
+                }}
+              />
+              <Legend wrapperStyle={{ paddingTop: '20px' }} />
+              {yAxisKeys.map((key, index) => (
+                <Line
+                  key={key}
+                  type="monotone"
+                  dataKey={key}
+                  stroke={colors[index % colors.length]}
+                  strokeWidth={2}
+                />
+              ))}
+            </LineChart>
+          )}
+        </ResponsiveContainer>
+      </div>
+    </Card>
+  )
+}
