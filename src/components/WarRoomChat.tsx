@@ -20,64 +20,88 @@ interface ChatMessage {
   role: 'user' | 'agent'
   content: string
   timestamp: Date
-}
-
-interface AgentResponse {
-  threadId: string
-  answer: string | null
-  status: string
-  error: string | null
+  isStreaming?: boolean
 }
 
 /**
- * Envía un mensaje al agente de Azure Function
- * @param message - Mensaje del usuario
- * @param threadId - ID del hilo de conversación (opcional)
- * @returns Respuesta del agente con threadId, answer, status y error
+ * Streams a message to the Foundry workflow via the Node.js SSE proxy.
+ * Calls onDelta for each text chunk, onDone when finished, onError on failure.
  */
-async function sendToAgent(message: string, threadId?: string): Promise<AgentResponse> {
-  const url = import.meta.env.VITE_AZURE_CHAT_ENDPOINT || 'https://fa-campaign-impact-hub.azurewebsites.net/api/chat'
-  
+async function streamFromAgent(
+  message: string,
+  conversationId: string | null,
+  callbacks: {
+    onDelta: (text: string, conversationId: string) => void
+    onDone: (conversationId: string) => void
+    onError: (error: string) => void
+    signal?: AbortSignal
+  }
+): Promise<void> {
+  const url = '/api/chat'
+
   const response = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       message,
-      ...(threadId && { threadId }),
+      ...(conversationId && { conversationId }),
     }),
+    signal: callbacks.signal,
   })
 
   if (!response.ok) {
     const errorText = await response.text()
-    
-    // Proporcionar mensajes de error más específicos según el código de estado
-    let errorMessage = errorText || `Error ${response.status}: ${response.statusText}`
-    
-    if (response.status === 401 || response.status === 403) {
-      errorMessage = 'Error de autenticación: no tienes permisos para acceder al servicio'
-    } else if (response.status === 429) {
-      errorMessage = 'Límite de solicitudes excedido: por favor intenta de nuevo en unos momentos'
-    } else if (response.status >= 500) {
-      errorMessage = 'Error del servidor: el servicio no está disponible temporalmente'
-    }
-    
-    throw new Error(errorMessage)
+    throw new Error(errorText || `Error ${response.status}: ${response.statusText}`)
   }
 
-  return response.json()
+  const reader = response.body!.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    buffer += decoder.decode(value, { stream: true })
+    const lines = buffer.split('\n')
+    buffer = lines.pop() || ''
+
+    let currentEvent = ''
+    for (const line of lines) {
+      if (line.startsWith('event: ')) {
+        currentEvent = line.slice(7).trim()
+      } else if (line.startsWith('data: ')) {
+        const dataStr = line.slice(6).trim()
+        let data: Record<string, unknown>
+        try {
+          data = JSON.parse(dataStr)
+        } catch {
+          continue
+        }
+
+        if (currentEvent === 'delta') {
+          callbacks.onDelta(data.text as string, data.conversationId as string)
+        } else if (currentEvent === 'done') {
+          callbacks.onDone(data.conversationId as string)
+        } else if (currentEvent === 'error') {
+          callbacks.onError(data.error as string)
+        }
+      }
+    }
+  }
 }
 
 export function WarRoomChat({ language }: WarRoomChatProps) {
   const [isConnected] = useState(true)
   const [userInput, setUserInput] = useState('')
   const [isSending, setIsSending] = useState(false)
+  const [isStreaming, setIsStreaming] = useState(false)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
-  const [threadId, setThreadId] = useState<string | null>(null)
+  const [conversationId, setConversationId] = useState<string | null>(null)
   const [currentBrief] = useKV<CampaignBriefData>('campaign-brief-data')
   const { selectedBrief, clearSelectedBrief } = useBriefStore()
   const scrollRef = useRef<HTMLDivElement>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   // Auto-scroll al último mensaje
   useEffect(() => {
@@ -132,15 +156,14 @@ ${selectedBrief.briefText}`
       return
     }
 
-    // Validar que haya un brief seleccionado
     if (!selectedBrief && !currentBrief) {
       toast.error(language === 'es' ? 'Por favor selecciona un brief primero' : 'Please select a brief first')
       return
     }
 
     setIsSending(true)
+    setIsStreaming(true)
 
-    // Agregar mensaje del usuario al chat
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       role: 'user',
@@ -150,10 +173,19 @@ ${selectedBrief.briefText}`
     setChatMessages(prev => [...prev, userMessage])
     setUserInput('')
 
-    try {
-      // Construir mensaje con contexto del brief
-      const briefContext = buildBriefContext()
-      const contextualizedMessage = `---
+    // Create a placeholder agent message for streaming
+    const agentMsgId = `agent-${Date.now()}`
+    const agentMessage: ChatMessage = {
+      id: agentMsgId,
+      role: 'agent',
+      content: '',
+      timestamp: new Date(),
+      isStreaming: true,
+    }
+    setChatMessages(prev => [...prev, agentMessage])
+
+    const briefContext = buildBriefContext()
+    const contextualizedMessage = `---
 CONTEXTO (Brief seleccionado):
 ${briefContext}
 ---
@@ -161,43 +193,63 @@ ${briefContext}
 PREGUNTA DEL USUARIO:
 ${trimmedInput}`
 
-      // Enviar al agente
-      const response = await sendToAgent(contextualizedMessage, threadId || undefined)
+    const controller = new AbortController()
+    abortRef.current = controller
 
-      // Guardar threadId si es la primera interacción
-      if (response.threadId && !threadId) {
-        setThreadId(response.threadId)
-      }
+    try {
+      await streamFromAgent(contextualizedMessage, conversationId, {
+        signal: controller.signal,
+        onDelta: (text, convId) => {
+          if (convId && !conversationId) {
+            setConversationId(convId)
+          }
+          setChatMessages(prev =>
+            prev.map(m =>
+              m.id === agentMsgId ? { ...m, content: m.content + text } : m
+            )
+          )
+        },
+        onDone: (convId) => {
+          if (convId) setConversationId(convId)
+          setChatMessages(prev =>
+            prev.map(m =>
+              m.id === agentMsgId ? { ...m, isStreaming: false } : m
+            )
+          )
+        },
+        onError: (error) => {
+          setChatMessages(prev =>
+            prev.map(m =>
+              m.id === agentMsgId
+                ? { ...m, content: `❌ Error: ${error}`, isStreaming: false }
+                : m
+            )
+          )
+          toast.error(error)
+        },
+      })
 
-      // Agregar respuesta del agente al chat
-      if (response.answer) {
-        const agentMessage: ChatMessage = {
-          id: `agent-${Date.now()}`,
-          role: 'agent',
-          content: response.answer,
-          timestamp: new Date()
-        }
-        setChatMessages(prev => [...prev, agentMessage])
-      } else if (response.error) {
-        toast.error(response.error)
-      }
-
+      // Mark streaming done in case onDone wasn't received
+      setChatMessages(prev =>
+        prev.map(m =>
+          m.id === agentMsgId ? { ...m, isStreaming: false } : m
+        )
+      )
     } catch (error) {
+      if ((error as Error).name === 'AbortError') return
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
-      toast.error(language === 'es' ? `Error al enviar mensaje: ${errorMessage}` : `Error sending message: ${errorMessage}`)
-      
-      // Agregar mensaje de error al chat
-      const errorChatMessage: ChatMessage = {
-        id: `error-${Date.now()}`,
-        role: 'agent',
-        content: language === 'es' 
-          ? `❌ Error: ${errorMessage}` 
-          : `❌ Error: ${errorMessage}`,
-        timestamp: new Date()
-      }
-      setChatMessages(prev => [...prev, errorChatMessage])
+      toast.error(language === 'es' ? `Error: ${errorMessage}` : `Error: ${errorMessage}`)
+      setChatMessages(prev =>
+        prev.map(m =>
+          m.id === agentMsgId
+            ? { ...m, content: `❌ Error: ${errorMessage}`, isStreaming: false }
+            : m
+        )
+      )
     } finally {
       setIsSending(false)
+      setIsStreaming(false)
+      abortRef.current = null
     }
   }
 
@@ -208,9 +260,15 @@ ${trimmedInput}`
     }
   }
 
-  const handleClearChat = () => {
+  const handleClearChat = async () => {
+    if (abortRef.current) abortRef.current.abort()
+    if (conversationId) {
+      fetch(`/api/chat/${encodeURIComponent(conversationId)}`, { method: 'DELETE' }).catch(() => {})
+    }
     setChatMessages([])
-    setThreadId(null)
+    setConversationId(null)
+    setIsStreaming(false)
+    setIsSending(false)
     toast.info(language === 'es' ? 'Conversación limpiada' : 'Conversation cleared')
   }
 
@@ -228,7 +286,7 @@ ${trimmedInput}`
           {isConnected ? (
             <>
               <PlugsConnected size={12} weight="fill" className="text-success" />
-              {language === 'es' ? 'Conectado a Azure Function' : 'Connected to Azure Function'}
+              {language === 'es' ? 'Conectado a Azure AI Foundry' : 'Connected to Azure AI Foundry'}
             </>
           ) : (
             <>
@@ -278,9 +336,15 @@ ${trimmedInput}`
           </div>
         )}
 
-        {threadId && (
-          <Badge variant="secondary" className="text-xs mb-3 w-full justify-center" title={`Thread ID completo: ${threadId}`}>
-            {language === 'es' ? 'Conversación activa' : 'Active conversation'} - Thread: {threadId.substring(0, 8)}...
+        {conversationId && (
+          <Badge variant="secondary" className="text-xs mb-3 w-full justify-center" title={conversationId}>
+            {language === 'es' ? 'Conversación activa' : 'Active conversation'} - {conversationId.substring(0, 12)}...
+          </Badge>
+        )}
+
+        {isStreaming && (
+          <Badge variant="outline" className="text-xs mb-3 w-full justify-center animate-pulse">
+            {language === 'es' ? '⚡ Generando respuesta...' : '⚡ Generating response...'}
           </Badge>
         )}
       </div>
@@ -365,7 +429,7 @@ ${trimmedInput}`
           >
             <Lightning size={18} weight="fill" className="mr-2" />
             {isSending
-              ? (language === 'es' ? 'Enviando...' : 'Sending...')
+              ? (language === 'es' ? 'Generando...' : 'Generating...')
               : (language === 'es' ? 'Enviar' : 'Send')}
           </Button>
 
