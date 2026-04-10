@@ -3,6 +3,7 @@ import { useKV } from '@github/spark/hooks'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { OutputCard } from '@/components/OutputCard'
 import { CampaignOverview } from '@/components/CampaignOverview'
@@ -31,7 +32,8 @@ import {
   ChartLineUp,
   Warning,
   CheckSquare,
-  Sparkle
+  Sparkle,
+  Export
 } from '@phosphor-icons/react'
 import type { CampaignOutput, ContentCalendarItem, CreativeRoute, FunnelPhase, PaidPackData, LandingKitData, FlowSequence, RisksAssumptionsData, ExecutionChecklistData } from '@/lib/types'
 
@@ -49,6 +51,7 @@ export function CampaignDashboard({
   onRegenerateBlock
 }: CampaignDashboardProps) {
   const [activeTab, setActiveTab] = useState('overview')
+  const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [versions, setVersions] = useKV<Record<string, string[]>>('output-versions', {})
   const copy = getCopy(language)
 
@@ -70,7 +73,16 @@ export function CampaignDashboard({
     <div className="w-full">
       {hasCampaignData && (
         <div className="mb-4 flex justify-end">
-          <CampaignExport outputs={outputs} language={language} />
+          <Button onClick={() => setExportDialogOpen(true)} className="gap-2">
+            <Export size={18} weight="fill" />
+            {t('Exportar', 'Export')}
+          </Button>
+          <CampaignExport 
+            outputs={outputs} 
+            language={language} 
+            open={exportDialogOpen}
+            onOpenChange={setExportDialogOpen}
+          />
         </div>
       )}
       
