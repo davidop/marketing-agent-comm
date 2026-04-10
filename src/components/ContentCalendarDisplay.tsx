@@ -1,10 +1,12 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Calendar, TrendingUp, AlertTriangle, CheckCircle2, Download } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Calendar, TrendingUp, AlertTriangle, CheckCircle2, Download, ChartBar } from 'lucide-react'
 import { toast } from 'sonner'
+import { InteractiveChart } from '@/components/InteractiveChart'
 import type { ContentCalendarItem } from '@/lib/types'
 
 interface ContentCalendarDisplayProps {
@@ -169,6 +171,45 @@ export function ContentCalendarDisplay({ items, language = 'es' }: ContentCalend
 
   const mixHealth = calculateMixHealth()
 
+  const chartDataByCategory = useMemo(() => {
+    const categoryCount: Record<string, number> = {}
+    items.forEach(item => {
+      const cat = item.categoria || 'other'
+      categoryCount[cat] = (categoryCount[cat] || 0) + 1
+    })
+    return Object.entries(categoryCount).map(([name, value]) => ({
+      name: getCategoryLabel(name),
+      value,
+      category: name
+    }))
+  }, [items])
+
+  const chartDataByFunnel = useMemo(() => {
+    const funnelCount: Record<string, number> = {}
+    items.forEach(item => {
+      const phase = item.funnelPhase || 'other'
+      funnelCount[phase] = (funnelCount[phase] || 0) + 1
+    })
+    return Object.entries(funnelCount).map(([name, value]) => ({
+      name: getFunnelLabel(name),
+      value,
+      category: name
+    }))
+  }, [items])
+
+  const chartDataByChannel = useMemo(() => {
+    const channelCount: Record<string, number> = {}
+    items.forEach(item => {
+      const channel = item.canal || 'other'
+      channelCount[channel] = (channelCount[channel] || 0) + 1
+    })
+    return Object.entries(channelCount).map(([name, value]) => ({
+      name,
+      value,
+      category: name
+    }))
+  }, [items])
+
   const getCategoryLabel = (cat: string) => {
     const labels: Record<string, { es: string; en: string }> = {
       educacion: { es: 'Educación', en: 'Education' },
@@ -287,96 +328,152 @@ export function ContentCalendarDisplay({ items, language = 'es' }: ContentCalend
         )}
       </Card>
 
-      <Card className="p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <Calendar className="w-5 h-5 text-primary" />
-          <h3 className="text-lg font-bold">
-            {isSpanish ? 'Calendario de Contenido' : 'Content Calendar'}
-          </h3>
-          <Badge variant="secondary" className="ml-2">
-            {items.length} {isSpanish ? 'piezas' : 'pieces'}
-          </Badge>
-          <Button
-            onClick={exportToCSV}
-            variant="outline"
-            size="sm"
-            className="ml-auto gap-2"
-          >
-            <Download className="w-4 h-4" />
-            {isSpanish ? 'Exportar CSV' : 'Export CSV'}
-          </Button>
-        </div>
+      <Tabs defaultValue="list" className="w-full">
+        <TabsList className="glass-panel mb-4 border-2 rounded-xl p-1 w-fit">
+          <TabsTrigger value="list" className="rounded-lg px-4 py-2">
+            <Calendar className="w-4 h-4 mr-2" />
+            {isSpanish ? 'Lista' : 'List'}
+          </TabsTrigger>
+          <TabsTrigger value="charts" className="rounded-lg px-4 py-2">
+            <ChartBar className="w-4 h-4 mr-2" />
+            {isSpanish ? 'Visualizaciones' : 'Visualizations'}
+          </TabsTrigger>
+        </TabsList>
 
-        <div className="space-y-4">
-          {items.map((item, idx) => (
-            <Card key={idx} className="p-4 hover:shadow-md transition-shadow">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="md:w-32 flex-shrink-0">
-                  <div className="text-sm font-semibold text-muted-foreground mb-1">
-                    {isSpanish ? 'Fecha' : 'Date'}
-                  </div>
-                  <div className="font-bold text-primary">{item.date}</div>
-                </div>
+        <TabsContent value="charts" className="space-y-4">
+          <InteractiveChart
+            data={chartDataByCategory}
+            title={isSpanish ? 'Distribución por Categoría' : 'Distribution by Category'}
+            type="bar"
+            categories={Object.keys(chartDataByCategory.reduce((acc, item) => ({ ...acc, [item.category || '']: true }), {}))}
+            language={language}
+            enableZoom={true}
+            enableFilter={true}
+            xAxisKey="name"
+            yAxisKeys={['value']}
+            colors={['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']}
+          />
 
-                <div className="flex-1 space-y-3">
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline" className="font-semibold">
-                      {item.canal}
-                    </Badge>
-                    <Badge variant="outline" className="capitalize">
-                      {item.formato}
-                    </Badge>
-                    <Badge className={FUNNEL_COLORS[item.funnelPhase]}>
-                      {getFunnelLabel(item.funnelPhase)}
-                    </Badge>
-                    <Badge className={CATEGORY_COLORS[item.categoria]}>
-                      {getCategoryLabel(item.categoria)}
-                    </Badge>
-                  </div>
+          <InteractiveChart
+            data={chartDataByFunnel}
+            title={isSpanish ? 'Distribución por Fase del Funnel' : 'Distribution by Funnel Phase'}
+            type="line"
+            categories={Object.keys(chartDataByFunnel.reduce((acc, item) => ({ ...acc, [item.category || '']: true }), {}))}
+            language={language}
+            enableZoom={true}
+            enableFilter={true}
+            xAxisKey="name"
+            yAxisKeys={['value']}
+            colors={['#06b6d4', '#6366f1', '#ec4899', '#10b981']}
+          />
 
-                  <div className="grid md:grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="font-semibold text-muted-foreground">
-                        {isSpanish ? 'Objetivo:' : 'Objective:'}
-                      </span>
-                      <p className="mt-1">{item.objetivo}</p>
+          <InteractiveChart
+            data={chartDataByChannel}
+            title={isSpanish ? 'Distribución por Canal' : 'Distribution by Channel'}
+            type="bar"
+            categories={Object.keys(chartDataByChannel.reduce((acc, item) => ({ ...acc, [item.category || '']: true }), {}))}
+            language={language}
+            enableZoom={true}
+            enableFilter={true}
+            xAxisKey="name"
+            yAxisKeys={['value']}
+            colors={['#8b5cf6', '#f59e0b', '#10b981', '#3b82f6', '#ef4444']}
+          />
+        </TabsContent>
+
+        <TabsContent value="list">
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <Calendar className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-bold">
+                {isSpanish ? 'Calendario de Contenido' : 'Content Calendar'}
+              </h3>
+              <Badge variant="secondary" className="ml-2">
+                {items.length} {isSpanish ? 'piezas' : 'pieces'}
+              </Badge>
+              <Button
+                onClick={exportToCSV}
+                variant="outline"
+                size="sm"
+                className="ml-auto gap-2"
+              >
+                <Download className="w-4 h-4" />
+                {isSpanish ? 'Exportar CSV' : 'Export CSV'}
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              {items.map((item, idx) => (
+                <Card key={idx} className="p-4 hover:shadow-md transition-shadow">
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <div className="md:w-32 flex-shrink-0">
+                      <div className="text-sm font-semibold text-muted-foreground mb-1">
+                        {isSpanish ? 'Fecha' : 'Date'}
+                      </div>
+                      <div className="font-bold text-primary">{item.date}</div>
                     </div>
-                    <div>
-                      <span className="font-semibold text-muted-foreground">
-                        {isSpanish ? 'CTA:' : 'CTA:'}
-                      </span>
-                      <p className="mt-1 font-medium text-primary">{item.cta}</p>
+
+                    <div className="flex-1 space-y-3">
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="outline" className="font-semibold">
+                          {item.canal}
+                        </Badge>
+                        <Badge variant="outline" className="capitalize">
+                          {item.formato}
+                        </Badge>
+                        <Badge className={FUNNEL_COLORS[item.funnelPhase]}>
+                          {getFunnelLabel(item.funnelPhase)}
+                        </Badge>
+                        <Badge className={CATEGORY_COLORS[item.categoria]}>
+                          {getCategoryLabel(item.categoria)}
+                        </Badge>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <span className="font-semibold text-muted-foreground">
+                            {isSpanish ? 'Objetivo:' : 'Objective:'}
+                          </span>
+                          <p className="mt-1">{item.objetivo}</p>
+                        </div>
+                        <div>
+                          <span className="font-semibold text-muted-foreground">
+                            {isSpanish ? 'CTA:' : 'CTA:'}
+                          </span>
+                          <p className="mt-1 font-medium text-primary">{item.cta}</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="font-semibold text-muted-foreground text-sm">
+                          {isSpanish ? 'Idea Visual:' : 'Visual Idea:'}
+                        </span>
+                        <p className="mt-1 text-sm italic">{item.ideaVisual}</p>
+                      </div>
+
+                      <div>
+                        <span className="font-semibold text-muted-foreground text-sm">
+                          {isSpanish ? 'Copy Base:' : 'Base Copy:'}
+                        </span>
+                        <p className="mt-1 text-sm">{item.copyBase}</p>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-sm pt-2 border-t">
+                        <span className="font-semibold text-muted-foreground">
+                          {isSpanish ? 'KPI Sugerido:' : 'Suggested KPI:'}
+                        </span>
+                        <Badge variant="secondary" className="font-mono">
+                          {item.kpiSugerido}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
-
-                  <div>
-                    <span className="font-semibold text-muted-foreground text-sm">
-                      {isSpanish ? 'Idea Visual:' : 'Visual Idea:'}
-                    </span>
-                    <p className="mt-1 text-sm italic">{item.ideaVisual}</p>
-                  </div>
-
-                  <div>
-                    <span className="font-semibold text-muted-foreground text-sm">
-                      {isSpanish ? 'Copy Base:' : 'Base Copy:'}
-                    </span>
-                    <p className="mt-1 text-sm">{item.copyBase}</p>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-sm pt-2 border-t">
-                    <span className="font-semibold text-muted-foreground">
-                      {isSpanish ? 'KPI Sugerido:' : 'Suggested KPI:'}
-                    </span>
-                    <Badge variant="secondary" className="font-mono">
-                      {item.kpiSugerido}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </Card>
+                </Card>
+              ))}
+            </div>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
