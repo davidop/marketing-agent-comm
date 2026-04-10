@@ -268,6 +268,82 @@ ${t('Generado con Campaign Impact Hub', 'Generated with Campaign Impact Hub')}
     }
   }
 
+  const generateBarChart = (data: Record<string, number>, total: number, labels: Array<{ key: string; label: string; color: string }>): string => {
+    const maxBarWidth = 400
+    let chart = `<div style="margin: 24px 0; padding: 20px; background: #f9f9f9; border-radius: 8px;">\n`
+    
+    labels.forEach(({ key, label, color }) => {
+      const count = data[key] || 0
+      const percentage = total > 0 ? (count / total * 100).toFixed(1) : '0'
+      const barWidth = total > 0 ? (count / total * maxBarWidth) : 0
+      
+      chart += `
+        <div style="margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+            <span style="font-size: 14px; font-weight: 600;">${label}</span>
+            <span style="font-size: 14px; color: #666;">${count} (${percentage}%)</span>
+          </div>
+          <div style="background: #e0e0e0; height: 24px; border-radius: 4px; overflow: hidden;">
+            <div style="background: ${color}; height: 100%; width: ${barWidth}px; border-radius: 4px; transition: width 0.3s;"></div>
+          </div>
+        </div>
+      `
+    })
+    
+    chart += `</div>\n`
+    return chart
+  }
+
+  const generatePieChart = (data: Record<string, number>, total: number, labels: Array<{ key: string; label: string; color: string }>): string => {
+    const size = 200
+    const center = size / 2
+    const radius = size / 2 - 10
+    
+    let currentAngle = 0
+    let paths = ''
+    let legendItems = ''
+    
+    labels.forEach(({ key, label, color }) => {
+      const count = data[key] || 0
+      const percentage = total > 0 ? (count / total * 100).toFixed(1) : '0'
+      const angle = total > 0 ? (count / total) * 360 : 0
+      
+      if (angle > 0) {
+        const startAngle = currentAngle
+        const endAngle = currentAngle + angle
+        
+        const startX = center + radius * Math.cos((startAngle - 90) * Math.PI / 180)
+        const startY = center + radius * Math.sin((startAngle - 90) * Math.PI / 180)
+        const endX = center + radius * Math.cos((endAngle - 90) * Math.PI / 180)
+        const endY = center + radius * Math.sin((endAngle - 90) * Math.PI / 180)
+        
+        const largeArc = angle > 180 ? 1 : 0
+        
+        paths += `<path d="M ${center} ${center} L ${startX} ${startY} A ${radius} ${radius} 0 ${largeArc} 1 ${endX} ${endY} Z" fill="${color}" stroke="#fff" stroke-width="2"/>\n`
+        
+        currentAngle += angle
+      }
+      
+      legendItems += `
+        <div style="display: flex; align-items: center; margin-bottom: 8px;">
+          <div style="width: 16px; height: 16px; background: ${color}; border-radius: 2px; margin-right: 8px;"></div>
+          <span style="font-size: 14px;">${label}: ${count} (${percentage}%)</span>
+        </div>
+      `
+    })
+    
+    return `
+      <div style="display: flex; align-items: center; gap: 32px; margin: 24px 0; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+        <svg width="${size}" height="${size}" style="flex-shrink: 0;">
+          ${paths}
+        </svg>
+        <div style="flex: 1;">
+          ${legendItems}
+        </div>
+      </div>
+    `
+  }
+
   const generateExportContent = (sectionsToInclude?: Set<keyof CampaignOutput>): string => {
     let content = ''
 
@@ -406,9 +482,69 @@ ${t('Generado con Campaign Impact Hub', 'Generated with Campaign Impact Hub')}
       
       const paidData = outputs.paidPack as any
       
+      if (paidData.budgetDistribution && Array.isArray(paidData.budgetDistribution) && paidData.budgetDistribution.length > 0) {
+        content += `<h3>${t('Distribución de Presupuesto', 'Budget Distribution')}</h3>\n`
+        
+        const budgetData: Record<string, number> = {}
+        paidData.budgetDistribution.forEach((phase: any) => {
+          if (phase.phase && phase.percentage) {
+            budgetData[phase.phase] = phase.percentage
+          }
+        })
+        
+        const budgetLabels = Object.keys(budgetData).map((key, idx) => ({
+          key,
+          label: key.charAt(0).toUpperCase() + key.slice(1),
+          color: ['oklch(0.75 0.12 165)', 'oklch(0.85 0.15 50)', 'oklch(0.88 0.08 340)', 'oklch(0.70 0.12 165)'][idx % 4]
+        }))
+        
+        content += generatePieChart(budgetData, 100, budgetLabels)
+        
+        content += `<table style="margin-top: 20px;">\n`
+        content += `<thead><tr>`
+        content += `<th>${t('Fase', 'Phase')}</th>`
+        content += `<th>${t('Porcentaje', 'Percentage')}</th>`
+        content += `<th>${t('Asignación', 'Allocation')}</th>`
+        content += `<th>${t('Justificación', 'Reasoning')}</th>`
+        content += `</tr></thead>\n`
+        content += `<tbody>\n`
+        
+        paidData.budgetDistribution.forEach((phase: any) => {
+          content += `<tr>`
+          content += `<td><strong>${phase.phase || ''}</strong></td>`
+          content += `<td>${phase.percentage || 0}%</td>`
+          content += `<td>${phase.allocation || ''}</td>`
+          content += `<td>${phase.reasoning || ''}</td>`
+          content += `</tr>\n`
+        })
+        
+        content += `</tbody></table>\n`
+      }
+      
+      if (paidData.creativeAngles && Array.isArray(paidData.creativeAngles) && paidData.creativeAngles.length > 0) {
+        content += `<h3 style="margin-top: 40px;">${t('Ángulos Creativos', 'Creative Angles')}</h3>\n`
+        
+        const angleCount: Record<string, number> = {}
+        paidData.creativeAngles.forEach((angle: any) => {
+          if (angle.angle) {
+            angleCount[angle.angle] = 1
+          }
+        })
+        
+        const angleLabels = [
+          { key: 'beneficio', label: t('Beneficio', 'Benefit'), color: 'oklch(0.75 0.12 165)' },
+          { key: 'urgencia', label: t('Urgencia', 'Urgency'), color: 'oklch(0.85 0.15 50)' },
+          { key: 'autoridad', label: t('Autoridad', 'Authority'), color: 'oklch(0.88 0.08 340)' },
+          { key: 'emocion', label: t('Emoción', 'Emotion'), color: 'oklch(0.70 0.12 165)' },
+          { key: 'objeciones', label: t('Objeciones', 'Objections'), color: 'oklch(0.65 0.10 200)' }
+        ]
+        
+        content += generateBarChart(angleCount, paidData.creativeAngles.length, angleLabels)
+      }
+      
       if (paidData.copyVariants) {
         if (paidData.copyVariants.hooks && paidData.copyVariants.hooks.length > 0) {
-          content += `<h3>Hooks</h3>\n<ul>\n`
+          content += `<h3 style="margin-top: 40px;">Hooks ${t('(Top 5)', '(Top 5)')}</h3>\n<ul>\n`
           paidData.copyVariants.hooks.slice(0, 5).forEach((hook: string) => {
             content += `<li>${hook}</li>\n`
           })
@@ -416,12 +552,35 @@ ${t('Generado con Campaign Impact Hub', 'Generated with Campaign Impact Hub')}
         }
         
         if (paidData.copyVariants.headlines && paidData.copyVariants.headlines.length > 0) {
-          content += `<h3>Headlines</h3>\n<ul>\n`
+          content += `<h3>Headlines ${t('(Top 5)', '(Top 5)')}</h3>\n<ul>\n`
           paidData.copyVariants.headlines.slice(0, 5).forEach((headline: string) => {
             content += `<li>${headline}</li>\n`
           })
           content += `</ul>\n`
         }
+      }
+      
+      if (paidData.audiences && Array.isArray(paidData.audiences) && paidData.audiences.length > 0) {
+        content += `<h3 style="margin-top: 40px;">${t('Audiencias', 'Audiences')}</h3>\n`
+        content += `<table>\n`
+        content += `<thead><tr>`
+        content += `<th>${t('Tipo', 'Type')}</th>`
+        content += `<th>${t('Nombre', 'Name')}</th>`
+        content += `<th>${t('Tamaño', 'Size')}</th>`
+        content += `<th>${t('Descripción', 'Description')}</th>`
+        content += `</tr></thead>\n`
+        content += `<tbody>\n`
+        
+        paidData.audiences.forEach((audience: any) => {
+          content += `<tr>`
+          content += `<td><span class="badge badge-primary">${audience.type || ''}</span></td>`
+          content += `<td><strong>${audience.name || ''}</strong></td>`
+          content += `<td>${audience.size || ''}</td>`
+          content += `<td>${audience.description || ''}</td>`
+          content += `</tr>\n`
+        })
+        
+        content += `</tbody></table>\n`
       }
       
       content += `</div>\n`
@@ -430,20 +589,57 @@ ${t('Generado con Campaign Impact Hub', 'Generated with Campaign Impact Hub')}
     if (Array.isArray(outputs.contentCalendar) && outputs.contentCalendar.length > 0 && (!sectionsToInclude || sectionsToInclude.has('contentCalendar'))) {
       content += `<div class="section">\n`
       content += `<h2>${t('Calendario de Contenido', 'Content Calendar')}</h2>\n`
+      
+      const categoryCount: Record<string, number> = {}
+      const channelCount: Record<string, number> = {}
+      const funnelPhaseCount: Record<string, number> = {}
+      
+      outputs.contentCalendar.forEach(item => {
+        if (item.categoria) {
+          categoryCount[item.categoria] = (categoryCount[item.categoria] || 0) + 1
+        }
+        if (item.canal) {
+          channelCount[item.canal] = (channelCount[item.canal] || 0) + 1
+        }
+        if (item.funnelPhase) {
+          funnelPhaseCount[item.funnelPhase] = (funnelPhaseCount[item.funnelPhase] || 0) + 1
+        }
+      })
+      
+      const total = outputs.contentCalendar.length
+      
+      content += `<h3>${t('Distribución por Categoría', 'Distribution by Category')}</h3>\n`
+      content += generateBarChart(categoryCount, total, [
+        { key: 'educacion', label: t('Educación', 'Education'), color: 'oklch(0.75 0.12 165)' },
+        { key: 'prueba-social', label: t('Prueba Social', 'Social Proof'), color: 'oklch(0.85 0.15 50)' },
+        { key: 'venta', label: t('Venta', 'Sales'), color: 'oklch(0.88 0.08 340)' },
+        { key: 'comunidad', label: t('Comunidad', 'Community'), color: 'oklch(0.70 0.12 165)' }
+      ])
+      
+      content += `<h3 style="margin-top: 40px;">${t('Distribución por Canal', 'Distribution by Channel')}</h3>\n`
+      content += generateBarChart(channelCount, total, Object.keys(channelCount).map((key, idx) => ({
+        key,
+        label: key,
+        color: ['oklch(0.75 0.12 165)', 'oklch(0.85 0.15 50)', 'oklch(0.88 0.08 340)', 'oklch(0.70 0.12 165)', 'oklch(0.65 0.10 200)'][idx % 5]
+      })))
+      
+      content += `<h3 style="margin-top: 40px;">${t('Calendario Detallado', 'Detailed Calendar')}</h3>\n`
       content += `<table>\n`
       content += `<thead><tr>`
       content += `<th>${t('Fecha', 'Date')}</th>`
       content += `<th>${t('Canal', 'Channel')}</th>`
       content += `<th>${t('Formato', 'Format')}</th>`
+      content += `<th>${t('Fase', 'Phase')}</th>`
       content += `<th>${t('Objetivo', 'Objective')}</th>`
       content += `</tr></thead>\n`
       content += `<tbody>\n`
       
-      outputs.contentCalendar.slice(0, 10).forEach(item => {
+      outputs.contentCalendar.slice(0, 15).forEach(item => {
         content += `<tr>`
         content += `<td>${item.date || ''}</td>`
         content += `<td>${item.canal || ''}</td>`
         content += `<td>${item.formato || ''}</td>`
+        content += `<td>${item.funnelPhase || ''}</td>`
         content += `<td>${item.objetivo || ''}</td>`
         content += `</tr>\n`
       })
