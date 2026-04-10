@@ -11,8 +11,8 @@ interface ChartDataPoint {
 
 interface InteractiveChartProps {
   title: string
-  data: ChartDataPoint[]
   type?: 'bar' | 'line'
+  yAxisKeys?: string[]
   xAxisKey?: string
   yAxisKeys?: string[]
   colors?: string[]
@@ -20,15 +20,15 @@ interface InteractiveChartProps {
   enableZoom?: boolean
   enableFilter?: boolean
   language?: 'es' | 'en'
-}
+ 
 
 const DEFAULT_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
 
 export function InteractiveChart({
-  title,
+  langua
   data,
   type = 'bar',
-  xAxisKey = 'name',
+
   yAxisKeys = [],
   colors = DEFAULT_COLORS,
   categories = [],
@@ -49,44 +49,44 @@ export function InteractiveChart({
     })
   }, [data, selectedCategories, enableFilter, categories])
 
-  const zoomedData = useMemo(() => {
+        return prev.filter(c => c !=
     if (!brushDomain) return filteredData
     const [startIndex, endIndex] = brushDomain
-    return filteredData.slice(startIndex, endIndex + 1)
-  }, [filteredData, brushDomain])
+    document.body.removeChild(link)
+    toast.success(isSpanish ? 'Da
 
   const handleZoomIn = () => {
-    setZoomLevel(prev => Math.min(prev + 20, 200))
+    <Card className="glass-panel p-6 space-y-4">
   }
 
-  const handleZoomOut = () => {
-    setZoomLevel(prev => Math.max(prev - 20, 50))
+              ? `${zoomedData.l
+          </p>
   }
 
-  const handleResetZoom = () => {
-    setZoomLevel(100)
-    setBrushDomain(null)
-  }
+              <Button
+                size=
+                disabled
+   
 
-  const handleCategoryToggle = (category: string) => {
-    setSelectedCategories(prev => {
-      if (prev.includes(category)) {
-        return prev.filter(c => c !== category)
-      } else {
-        return [...prev, category]
-      }
+                size="sm"
+                disabled={zoomLevel
+                <ArrowsIn />
+              <Button
+              
+              >
+       
     })
-  }
+   
 
-  const handleSelectAll = () => {
+            <DownloadSimple />
     setSelectedCategories([...categories])
-  }
 
-  const handleDeselectAll = () => {
+
+            <div className="flex it
     setSelectedCategories([])
-  }
+   
 
-  const exportChartData = () => {
+                variant="ghost"
     const headers = [xAxisKey, ...yAxisKeys]
     const csvContent = [
       headers.join(','),
@@ -98,27 +98,27 @@ export function InteractiveChart({
       })
     ].join('\n')
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
+                className="text-xs"
+                {category}
+            ))}
     
-    link.setAttribute('href', url)
-    link.setAttribute('download', `chart-${title.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.csv`)
-    link.style.visibility = 'hidden'
+
+        <ResponsiveContainer>
+            <BarChart
     
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+              <CartesianGrid stroke
+                
+                textAnchor="end"
 
-    toast.success(isSpanish ? 'Datos exportados' : 'Data exported')
-  }
+              <YAxis tick={{ fontSize: 12 }} />
+   
 
-  const chartHeight = Math.floor((zoomLevel / 100) * 400)
+                  padding: '8px 12px'
 
   return (
-    <Card className="glass-panel p-6 space-y-4">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
+                  key={key}
+                  fill={colors[index % colors.length]}
+              ))}
           <h3 className="text-lg font-bold mb-1">{title}</h3>
           <p className="text-sm text-muted-foreground">
             {isSpanish
@@ -221,99 +221,99 @@ export function InteractiveChart({
                 dataKey={xAxisKey}
                 angle={-45}
                 textAnchor="end"
-                height={100}
+
                 tick={{ fontSize: 12 }}
-              />
+
               <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip
+
                 contentStyle={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                  border: '1px solid #e5e7eb',
+
+
                   borderRadius: '8px',
                   padding: '8px 12px'
                 }}
-              />
+
               <Legend wrapperStyle={{ paddingTop: '20px' }} />
               {yAxisKeys.map((key, index) => (
                 <Bar
-                  key={key}
-                  dataKey={key}
-                  fill={colors[index % colors.length]}
-                />
-              ))}
-              {enableZoom && filteredData.length > 10 && (
-                <Brush
-                  dataKey={xAxisKey}
-                  height={30}
-                  stroke="#10b981"
-                  onChange={(domain: any) => {
-                    if (domain?.startIndex !== undefined && domain?.endIndex !== undefined) {
-                      setBrushDomain([domain.startIndex, domain.endIndex])
-                    }
-                  }}
-                />
-              )}
-            </BarChart>
-          ) : (
-            <LineChart
-              data={zoomedData}
-              margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-              <XAxis
-                dataKey={xAxisKey}
-                angle={-45}
-                textAnchor="end"
-                height={100}
-                tick={{ fontSize: 12 }}
-              />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                  padding: '8px 12px'
-                }}
-              />
-              <Legend wrapperStyle={{ paddingTop: '20px' }} />
-              {yAxisKeys.map((key, index) => (
-                <Line
-                  key={key}
-                  type="monotone"
-                  dataKey={key}
-                  stroke={colors[index % colors.length]}
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-              ))}
-              {enableZoom && filteredData.length > 10 && (
-                <Brush
-                  dataKey={xAxisKey}
-                  height={30}
-                  stroke="#10b981"
-                  onChange={(domain: any) => {
-                    if (domain?.startIndex !== undefined && domain?.endIndex !== undefined) {
-                      setBrushDomain([domain.startIndex, domain.endIndex])
-                    }
-                  }}
-                />
-              )}
-            </LineChart>
-          )}
-        </ResponsiveContainer>
-      </div>
 
-      {selectedCategories.length === 0 && categories.length > 0 && (
-        <div className="glass-panel p-4 rounded-lg border-2 border-orange-500/50">
-          <p className="text-sm text-orange-600 dark:text-orange-400">
-            {isSpanish
-              ? '⚠️ No hay categorías seleccionadas. Selecciona al menos una categoría para ver los datos.'
-              : '⚠️ No categories selected. Select at least one category to view data.'}
-          </p>
-        </div>
-      )}
-    </Card>
-  )
-}
+
+                  fill={colors[index % colors.length]}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
