@@ -346,7 +346,7 @@ export function ContentCalendarDisplay({ items, language = 'es' }: ContentCalend
             title={isSpanish ? 'Distribución por Categoría' : 'Distribution by Category'}
             type="bar"
             categories={Object.keys(chartDataByCategory.reduce((acc, item) => ({ ...acc, [item.category || '']: true }), {}))}
-            language={language}
+            isSpanish={isSpanish}
             enableZoom={true}
             enableFilter={true}
             xAxisKey="name"
@@ -359,7 +359,7 @@ export function ContentCalendarDisplay({ items, language = 'es' }: ContentCalend
             title={isSpanish ? 'Distribución por Fase del Funnel' : 'Distribution by Funnel Phase'}
             type="line"
             categories={Object.keys(chartDataByFunnel.reduce((acc, item) => ({ ...acc, [item.category || '']: true }), {}))}
-            language={language}
+            isSpanish={isSpanish}
             enableZoom={true}
             enableFilter={true}
             xAxisKey="name"
@@ -372,7 +372,7 @@ export function ContentCalendarDisplay({ items, language = 'es' }: ContentCalend
             title={isSpanish ? 'Distribución por Canal' : 'Distribution by Channel'}
             type="bar"
             categories={Object.keys(chartDataByChannel.reduce((acc, item) => ({ ...acc, [item.category || '']: true }), {}))}
-            language={language}
+            isSpanish={isSpanish}
             enableZoom={true}
             enableFilter={true}
             xAxisKey="name"

@@ -48,10 +48,26 @@ export function DraggableLeftColumn({
       id: 'brief-score',
       component: (
         <BriefScoreCard
-          score={briefScore}
-          missing={briefMissing}
-          recommendations={briefRecommendations}
-          statusText={briefStatusText}
+          analysis={{
+            score: briefScore,
+            missing: briefMissing,
+            risks: [],
+            breakdown: {
+              objectiveClear: 0,
+              audienceConcrete: 0,
+              offerAndPrice: 0,
+              usp: 0,
+              proofEvidence: 0,
+              channelsAndBudget: 0,
+              brandRestrictions: 0,
+              timingGeography: 0
+            },
+            recommendations: briefRecommendations,
+            criticalQuestions: [],
+            status: 'needs-improvement',
+            statusText: briefStatusText
+          }}
+          language={language}
         />
       )
     },
