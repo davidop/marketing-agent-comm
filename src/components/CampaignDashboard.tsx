@@ -16,6 +16,7 @@ import MeasurementUtmsDisplay from '@/components/MeasurementUtmsDisplay'
 import { RisksAssumptionsDisplay } from '@/components/RisksAssumptionsDisplay'
 import ExecutionChecklistDisplay from '@/components/ExecutionChecklistDisplay'
 import { EmptyState } from '@/components/EmptyState'
+import { CampaignExport } from '@/components/CampaignExport'
 import { getCopy } from '@/lib/premiumCopy'
 import { 
   Eye,
@@ -63,8 +64,16 @@ export function CampaignDashboard({
     })
   }
 
+  const hasCampaignData = outputs.overview || outputs.strategy || outputs.creativeRoutes || outputs.funnelBlueprint
+
   return (
     <div className="w-full">
+      {hasCampaignData && (
+        <div className="mb-4 flex justify-end">
+          <CampaignExport outputs={outputs} language={language} />
+        </div>
+      )}
+      
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <ScrollArea className="w-full">
           <TabsList className="glass-panel mb-6 border-2 rounded-xl p-1 inline-flex w-auto">
