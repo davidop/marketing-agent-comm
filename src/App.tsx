@@ -39,7 +39,7 @@ function App() {
   const [outputs, setOutputs] = useKV<Partial<CampaignOutput>>('campaign-outputs-v2', {})
   const [copyVariations, setCopyVariations] = useKV<CopyVariation[]>('copy-variations', [])
   
-  const [leftColumnOrder, setLeftColumnOrder] = useKV<string[]>('left-column-order', ['brief-wizard', 'demo-brief'])
+  const [leftColumnOrder, setLeftColumnOrder] = useKV<string[]>('left-column-order-v2', ['brief-wizard', 'demo-brief'])
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null)
 
   useEffect(() => {
