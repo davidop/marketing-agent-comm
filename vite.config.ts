@@ -19,15 +19,8 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
-            '@': resolve(projectRoot, 'src')
+            '@': resolve(projectRoot, 'src'),
+            '@github/spark/hooks': resolve(projectRoot, 'src/lib/sparkHooksShim.ts'),
         }
-    },
-    server: {
-        proxy: {
-            '/api': {
-                target: 'http://localhost:3001',
-                changeOrigin: true,
-            },
-        },
     },
 });

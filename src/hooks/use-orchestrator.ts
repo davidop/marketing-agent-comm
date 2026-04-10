@@ -27,8 +27,9 @@ export function useOrchestrator(options: UseOrchestratorOptions = {}) {
     return newThread
   }, [])
 
-  const sendMessage = useCallback(async (content: string) => {
-    if (!thread) {
+  const sendMessage = useCallback(async (content: string, overrideThread?: AgentThread) => {
+    const activeThread = overrideThread || thread
+    if (!activeThread) {
       const err = new Error('No active thread. Call createThread() first.')
       setError(err)
       onError?.(err)
@@ -40,21 +41,21 @@ export function useOrchestrator(options: UseOrchestratorOptions = {}) {
 
     try {
       const userMessage = orchestrator.createMessage(
-        thread.id,
+        activeThread.id,
         'user',
         content
       )
 
       setMessages(prev => [...prev, userMessage])
 
-      const run = orchestrator.createRun(thread.id, agentId)
+      const run = orchestrator.createRun(activeThread.id, agentId)
 
       const completedRun = await orchestrator.waitForRun(
-        thread.id,
+        activeThread.id,
         run.id
       )
 
-      const updatedMessages = orchestrator.listMessages(thread.id)
+      const updatedMessages = orchestrator.listMessages(activeThread.id)
       setMessages(updatedMessages)
 
       const assistantMessage = updatedMessages[updatedMessages.length - 1]

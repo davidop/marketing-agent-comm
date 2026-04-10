@@ -65,7 +65,6 @@ app.post('/api/run', async (req, res) => {
 // --------------- Foundry Chat (SSE streaming) ---------------
 
 const WORKFLOW_NAME = 'campaign-orchestration-flow'
-const WORKFLOW_VERSION = '2'
 const TOKEN_SCOPE = 'https://ai.azure.com/.default'
 
 const credential = new DefaultAzureCredential()
@@ -82,6 +81,7 @@ async function getBearerToken() {
  * Response: SSE stream with events: delta, workflow, done, error
  */
 app.post('/api/chat', async (req, res) => {
+    console.log('[Chat] === Request received ===')
     const projectEndpoint = process.env.AZURE_AI_PROJECT_ENDPOINT
     if (!projectEndpoint) {
         return res.status(500).json({ error: 'AZURE_AI_PROJECT_ENDPOINT not configured' })
@@ -118,13 +118,16 @@ app.post('/api/chat', async (req, res) => {
     try {
         // 1) Create conversation if none provided
         if (!conversationId) {
-            const convRes = await fetch(`${baseUrl}/openai/conversations?api-version=2025-05-01-preview`, {
+            const convUrl = `${baseUrl}/openai/v1/conversations`
+            console.log('[Chat] Creating conversation at:', convUrl)
+            const convRes = await fetch(convUrl, {
                 method: 'POST',
                 headers,
                 body: JSON.stringify({}),
             })
             if (!convRes.ok) {
                 const errText = await convRes.text()
+                console.error('[Chat] Create conversation failed:', convRes.status, errText)
                 res.write(`event: error\ndata: ${JSON.stringify({ error: `Create conversation failed (${convRes.status}): ${errText}` })}\n\n`)
                 return res.end()
             }
@@ -134,17 +137,14 @@ app.post('/api/chat', async (req, res) => {
         }
 
         // 2) Send message with streaming via responses endpoint
-        const responsesUrl = `${baseUrl}/openai/responses?api-version=2025-05-01-preview`
+        const responsesUrl = `${baseUrl}/openai/v1/responses`
         const body = {
             conversation: conversationId,
             input: message,
             stream: true,
-            extra_body: {
-                agent_reference: {
-                    name: WORKFLOW_NAME,
-                    type: 'agent_reference',
-                    version: WORKFLOW_VERSION,
-                }
+            agent_reference: {
+                name: WORKFLOW_NAME,
+                type: 'agent_reference',
             },
             metadata: { 'x-ms-debug-mode-enabled': '1' },
         }
@@ -240,7 +240,7 @@ app.delete('/api/chat/:conversationId', async (req, res) => {
         const convId = req.params.conversationId
 
         const delRes = await fetch(
-            `${baseUrl}/openai/conversations/${encodeURIComponent(convId)}?api-version=2025-05-01-preview`,
+            `${baseUrl}/openai/v1/conversations/${encodeURIComponent(convId)}`,
             {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` },
@@ -269,6 +269,7 @@ app.delete('/api/chat/:conversationId', async (req, res) => {
  * collects the full streamed response, and returns { text, conversationId }.
  */
 app.post('/api/generate', async (req, res) => {
+    console.log('[Generate] === Request received ===')
     const projectEndpoint = process.env.AZURE_AI_PROJECT_ENDPOINT
     if (!projectEndpoint) {
         return res.status(500).json({ error: 'AZURE_AI_PROJECT_ENDPOINT not configured' })
@@ -295,13 +296,19 @@ app.post('/api/generate', async (req, res) => {
     let conversationId
     try {
         // 1) Create conversation
-        const convRes = await fetch(`${baseUrl}/openai/conversations?api-version=2025-05-01-preview`, {
+        const convUrl = `${baseUrl}/openai/v1/conversations`
+        console.log('[Generate] URL:', convUrl)
+        console.log('[Generate] Token (first 20):', token.substring(0, 20))
+        console.log('[Generate] Headers:', JSON.stringify(Object.keys(headers)))
+        const convRes = await fetch(convUrl, {
             method: 'POST',
             headers,
             body: JSON.stringify({}),
         })
+        console.log('[Generate] Conv response status:', convRes.status)
         if (!convRes.ok) {
             const errText = await convRes.text()
+            console.error('[Generate] Conv error:', errText)
             return res.status(convRes.status).json({ error: `Create conversation failed: ${errText}` })
         }
         const convData = await convRes.json()
@@ -309,7 +316,7 @@ app.post('/api/generate', async (req, res) => {
         console.log('[Generate] Created conversation:', conversationId)
 
         // 2) Send brief to workflow and collect full response
-        const responsesUrl = `${baseUrl}/openai/responses?api-version=2025-05-01-preview`
+        const responsesUrl = `${baseUrl}/openai/v1/responses`
         const prompt = language === 'en'
             ? `Generate a complete marketing campaign plan based on this brief. Respond in English.\n\n${briefText}`
             : `Genera un plan de campa\u00f1a de marketing completo basado en este brief. Responde en espa\u00f1ol.\n\n${briefText}`
@@ -318,12 +325,9 @@ app.post('/api/generate', async (req, res) => {
             conversation: conversationId,
             input: prompt,
             stream: true,
-            extra_body: {
-                agent_reference: {
-                    name: WORKFLOW_NAME,
-                    type: 'agent_reference',
-                    version: WORKFLOW_VERSION,
-                }
+            agent_reference: {
+                name: WORKFLOW_NAME,
+                type: 'agent_reference',
             },
             metadata: { 'x-ms-debug-mode-enabled': '1' },
         }
@@ -384,7 +388,7 @@ app.post('/api/generate', async (req, res) => {
         // 4) Delete conversation to free resources
         try {
             await fetch(
-                `${baseUrl}/openai/conversations/${encodeURIComponent(conversationId)}?api-version=2025-05-01-preview`,
+                `${baseUrl}/openai/v1/conversations/${encodeURIComponent(conversationId)}`,
                 { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }
             )
             console.log('[Generate] Deleted conversation:', conversationId)
@@ -402,7 +406,7 @@ app.post('/api/generate', async (req, res) => {
             try {
                 const cleanupToken = await getBearerToken()
                 await fetch(
-                    `${baseUrl}/openai/conversations/${encodeURIComponent(conversationId)}?api-version=2025-05-01-preview`,
+                    `${baseUrl}/openai/v1/conversations/${encodeURIComponent(conversationId)}`,
                     { method: 'DELETE', headers: { 'Authorization': `Bearer ${cleanupToken}` } }
                 )
             } catch { /* ignore cleanup errors */ }
@@ -424,7 +428,7 @@ app.get('/health', (req, res) => {
 
 const PORT = process.env.PORT || 3001
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`\u26A1 Foundry Proxy server running on http://localhost:${PORT}`)
     console.log(`    Health check: http://localhost:${PORT}/health`)
     console.log(`    Chat SSE:         POST http://localhost:${PORT}/api/chat`)
@@ -433,3 +437,9 @@ app.listen(PORT, () => {
     console.log(`    Project endpoint: ${process.env.AZURE_AI_PROJECT_ENDPOINT ? '\u2705 Yes' : '\u274C No'}`)
     console.log(`    API Key configured: ${process.env.FOUNDRY_API_KEY ? '\u2705 Yes' : '\u274C No (optional)'}`)
 })
+
+// Keep process alive (Express 5 + ESM on Windows can drop the event loop)
+server.keepAliveTimeout = 65000
+const keepAlive = setInterval(() => {}, 1 << 30)
+process.on('SIGINT', () => { clearInterval(keepAlive); server.close(); process.exit(0) })
+process.on('SIGTERM', () => { clearInterval(keepAlive); server.close(); process.exit(0) })

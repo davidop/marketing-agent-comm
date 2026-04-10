@@ -16,6 +16,7 @@ import { DraggableSectionWrapper } from '@/components/DraggableSectionWrapper'
 import { FileText, Palette, Sparkle, Lightning, ShieldCheck, Robot, Crosshair } from '@phosphor-icons/react'
 import type { Language } from '@/lib/i18n'
 import type { CampaignBriefData, CampaignOutput, CopyVariation, BrandKit, FlowSequence, ContentCalendarItem } from '@/lib/types'
+import { API_BASE } from '@/lib/apiBase'
 
 function App() {
   const [theme, setTheme] = useKV<string>('theme', 'light')
@@ -108,8 +109,8 @@ function App() {
         briefData.legalRequirements ? `Requisitos legales: ${briefData.legalRequirements}` : '',
         briefData.availableAssets ? `Assets disponibles: ${briefData.availableAssets}` : '',
         briefData.links ? `Links: ${briefData.links}` : '',
-        briefData.proof ? `Pruebas/Social proof: ${briefData.proof.join(', ')}` : '',
-        briefData.competitors ? `Competidores: ${briefData.competitors.join(', ')}` : '',
+        briefData.proof ? `Pruebas/Social proof: ${Array.isArray(briefData.proof) ? briefData.proof.join(', ') : briefData.proof}` : '',
+        briefData.competitors ? `Competidores: ${Array.isArray(briefData.competitors) ? briefData.competitors.join(', ') : briefData.competitors}` : '',
         briefData.margin ? `Margen: ${briefData.margin}` : '',
         '',
         `BRAND KIT:`,
@@ -125,8 +126,9 @@ function App() {
         kit.brandExamplesNo.length > 0 ? `- Ejemplos de copy NO: ${kit.brandExamplesNo.join(' | ')}` : '',
       ].filter(Boolean).join('\n')
 
-      // Call Foundry workflow via proxy
-      const generateUrl = import.meta.env.VITE_GENERATE_ENDPOINT || '/api/generate'
+      // Call Foundry workflow directly (Spark overwrites Vite proxy)
+      const generateUrl = `${API_BASE}/api/generate`
+      console.log('[App] Calling generate at:', generateUrl)
       const response = await fetch(generateUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

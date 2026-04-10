@@ -47,11 +47,16 @@ export function OrchestratorDemo() {
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return
-    
+
     const message = inputMessage.trim()
     setInputMessage('')
-    
-    await sendMessage(message)
+
+    let activeThread = thread
+    if (!activeThread) {
+      activeThread = createThread({ source: 'chat' })
+    }
+
+    await sendMessage(message, activeThread)
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -69,8 +74,9 @@ export function OrchestratorDemo() {
   }
 
   const handleGenerateCampaign = async () => {
-    if (!thread) {
-      createThread({
+    let activeThread = thread
+    if (!activeThread) {
+      activeThread = createThread({
         source: 'campaign-generation'
       })
     }
@@ -84,10 +90,10 @@ export function OrchestratorDemo() {
 
 Please provide a comprehensive and actionable campaign strategy.`
 
-    await sendMessage(campaignPrompt)
     toast.success('Campaign generation started', {
       description: 'The orchestrator is creating your campaign...'
     })
+    await sendMessage(campaignPrompt, activeThread)
   }
 
   return (

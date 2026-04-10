@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { PlugsConnected, Plug, Lightning, Copy, CheckCircle, WarningCircle, X, FileText, User, Robot } from '@phosphor-icons/react'
 import { useBriefStore } from '@/lib/briefStore'
 import type { CampaignBriefData } from '@/lib/types'
+import { API_BASE } from '@/lib/apiBase'
 import { toast } from 'sonner'
 
 interface WarRoomChatProps {
@@ -33,7 +34,7 @@ async function streamFromAgent(
     signal?: AbortSignal
   }
 ): Promise<void> {
-  const url = '/api/chat'
+  const url = `${API_BASE}/api/chat`
 
   const response = await fetch(url, {
     method: 'POST',
@@ -250,7 +251,7 @@ ${trimmedInput}`
   const handleClearChat = async () => {
     if (abortRef.current) abortRef.current.abort()
     if (conversationId) {
-      fetch(`/api/chat/${encodeURIComponent(conversationId)}`, { method: 'DELETE' }).catch(() => {})
+      fetch(`http://localhost:3001/api/chat/${encodeURIComponent(conversationId)}`, { method: 'DELETE' }).catch(() => {})
     }
     setChatMessages([])
     setConversationId(null)

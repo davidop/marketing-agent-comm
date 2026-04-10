@@ -1,6 +1,8 @@
+import { API_BASE } from '@/lib/apiBase'
+
 export type MessageRole = 'user' | 'assistant' | 'system'
 
-export type ThreadRunStatus = 
+export type ThreadRunStatus =
   | 'queued'
   | 'in_progress'
   | 'requires_action'
@@ -42,31 +44,10 @@ export interface Agent {
 }
 
 class OrchestratorClient {
-  private agents = new Map<string, Agent>()
   private threads = new Map<string, AgentThread>()
   private messages = new Map<string, ThreadMessage[]>()
   private runs = new Map<string, ThreadRun>()
-
-  constructor() {
-    const defaultAgent: Agent = {
-      id: 'asst_campaign_strategist',
-      name: 'Campaign Strategist',
-      instructions: `Eres un estratega de marketing experto con 10+ años de experiencia.
-
-Tu misión es ayudar a crear, optimizar y ejecutar campañas de marketing efectivas.
-
-Capacidades:
-1. Analizar briefs de campaña y detectar gaps
-2. Crear estrategias de marketing integrales
-3. Optimizar presupuestos y canales
-4. Crear calendarios de contenido
-5. Generar copy efectivo para diferentes plataformas
-
-Responde de forma clara, estructurada y accionable.`,
-      model: 'gpt-4o',
-    }
-    this.agents.set(defaultAgent.id, defaultAgent)
-  }
+  private conversationIds = new Map<string, string>() // threadId -> Azure conversationId
 
   createThread(metadata?: Record<string, unknown>): AgentThread {
     const threadId = `thread_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -112,7 +93,7 @@ Responde de forma clara, estructurada y accionable.`,
     return messages
   }
 
-  createRun(threadId: string, assistantId: string): ThreadRun {
+  createRun(threadId: string, _assistantId: string): ThreadRun {
     const runId = `run_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     const run: ThreadRun = {
       id: runId,
@@ -120,41 +101,91 @@ Responde de forma clara, estructurada y accionable.`,
       status: 'queued',
       createdAt: new Date(),
     }
-    
+
     this.runs.set(runId, run)
-    this.processRun(run, assistantId)
-    
+    this.processRun(run)
+
     return run
   }
 
-  private async processRun(run: ThreadRun, assistantId: string) {
+  private async processRun(run: ThreadRun) {
     const runData = this.runs.get(run.id)
     if (!runData) return
 
     runData.status = 'in_progress'
 
     try {
-      const agent = this.agents.get(assistantId)
-      if (!agent) {
-        throw new Error(`Agent ${assistantId} not found`)
+      const threadMessages = this.listMessages(run.threadId)
+      const lastUserMessage = [...threadMessages].reverse().find(m => m.role === 'user')
+
+      if (!lastUserMessage) {
+        throw new Error('No user message found in thread')
       }
 
-      const threadMessages = this.listMessages(run.threadId)
-      const conversationHistory = threadMessages
-        .map(msg => `${msg.role}: ${msg.content}`)
-        .join('\n')
+      const azureConvId = this.conversationIds.get(run.threadId) || null
 
-      const promptText = `${agent.instructions}
+      // Call the real Foundry backend via SSE
+      const response = await fetch(`${API_BASE}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: lastUserMessage.content,
+          ...(azureConvId && { conversationId: azureConvId }),
+        }),
+      })
 
-Historial de conversación:
-${conversationHistory}
+      if (!response.ok) {
+        const errText = await response.text()
+        throw new Error(`Foundry API error (${response.status}): ${errText}`)
+      }
 
-Por favor, responde al último mensaje del usuario.`
+      // Parse SSE stream
+      const reader = response.body!.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let fullText = ''
 
-      const response = await spark.llm(promptText, 'gpt-4o')
-      
-      this.createMessage(run.threadId, 'assistant', response)
-      
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        let currentEvent = ''
+        for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            currentEvent = line.slice(7).trim()
+          } else if (line.startsWith('data: ')) {
+            const dataStr = line.slice(6).trim()
+            let data: Record<string, unknown>
+            try {
+              data = JSON.parse(dataStr)
+            } catch {
+              continue
+            }
+
+            if (currentEvent === 'delta') {
+              fullText += data.text as string
+              if (data.conversationId && !azureConvId) {
+                this.conversationIds.set(run.threadId, data.conversationId as string)
+              }
+            } else if (currentEvent === 'done') {
+              if (data.conversationId) {
+                this.conversationIds.set(run.threadId, data.conversationId as string)
+              }
+            } else if (currentEvent === 'error') {
+              throw new Error(data.error as string)
+            }
+          }
+        }
+      }
+
+      if (fullText) {
+        this.createMessage(run.threadId, 'assistant', fullText)
+      }
+
       runData.status = 'completed'
       runData.completedAt = new Date()
       this.runs.set(run.id, runData)
@@ -213,6 +244,13 @@ Por favor, responde al último mensaje del usuario.`
   }
 
   deleteThread(threadId: string): boolean {
+    // Clean up Azure conversation
+    const azureConvId = this.conversationIds.get(threadId)
+    if (azureConvId) {
+      fetch(`http://localhost:3001/api/chat/${encodeURIComponent(azureConvId)}`, { method: 'DELETE' }).catch(() => {})
+      this.conversationIds.delete(threadId)
+    }
+
     this.threads.delete(threadId)
     this.messages.delete(threadId)
 
