@@ -1,10 +1,18 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Separator } from '@/components/ui/separator'
 import { 
   DownloadSimple, 
   FilePdf, 
   FileDoc,
-  Spinner
+  Spinner,
+  GoogleLogo,
+  MicrosoftPowerpointLogo,
+  CheckCircle
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import type { CampaignOutput } from '@/lib/types'
@@ -14,16 +22,65 @@ interface CampaignExportProps {
   language: 'es' | 'en'
 }
 
+type ExportSection = {
+  id: keyof CampaignOutput
+  label: string
+  available: boolean
+}
+
 export function CampaignExport({ outputs, language }: CampaignExportProps) {
   const [isExportingPDF, setIsExportingPDF] = useState(false)
   const [isExportingPPTX, setIsExportingPPTX] = useState(false)
+  const [isExportingSlides, setIsExportingSlides] = useState(false)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [selectedSections, setSelectedSections] = useState<Set<keyof CampaignOutput>>(new Set())
 
   const t = (es: string, en: string) => language === 'es' ? es : en
 
+  const exportSections: ExportSection[] = [
+    { id: 'overview', label: t('Overview Ejecutivo', 'Executive Overview'), available: !!outputs.overview },
+    { id: 'strategy', label: t('Estrategia', 'Strategy'), available: !!outputs.strategy },
+    { id: 'creativeRoutes', label: t('Rutas Creativas', 'Creative Routes'), available: !!outputs.creativeRoutes },
+    { id: 'funnelBlueprint', label: t('Blueprint del Funnel', 'Funnel Blueprint'), available: !!outputs.funnelBlueprint },
+    { id: 'paidPack', label: t('Pack de Paid Media', 'Paid Media Pack'), available: !!outputs.paidPack },
+    { id: 'landingKit', label: t('Kit de Landing', 'Landing Kit'), available: !!outputs.landingKit },
+    { id: 'contentCalendar', label: t('Calendario de Contenido', 'Content Calendar'), available: !!outputs.contentCalendar },
+    { id: 'flows', label: t('Flujos de Email/WhatsApp', 'Email/WhatsApp Flows'), available: !!outputs.flows },
+    { id: 'experimentPlan', label: t('Plan de Experimentos', 'Experiment Plan'), available: !!outputs.experimentPlan },
+    { id: 'measurementUtms', label: t('Medición y UTMs', 'Measurement & UTMs'), available: !!outputs.measurementUtms },
+    { id: 'risks', label: t('Riesgos y Supuestos', 'Risks & Assumptions'), available: !!outputs.risks },
+    { id: 'executionChecklist', label: t('Checklist de Ejecución', 'Execution Checklist'), available: !!outputs.executionChecklist }
+  ]
+
+  const toggleSection = (sectionId: keyof CampaignOutput) => {
+    const newSelected = new Set(selectedSections)
+    if (newSelected.has(sectionId)) {
+      newSelected.delete(sectionId)
+    } else {
+      newSelected.add(sectionId)
+    }
+    setSelectedSections(newSelected)
+  }
+
+  const selectAll = () => {
+    const allAvailable = exportSections.filter(s => s.available).map(s => s.id)
+    setSelectedSections(new Set(allAvailable))
+  }
+
+  const deselectAll = () => {
+    setSelectedSections(new Set())
+  }
+
   const exportToPDF = async () => {
+    if (selectedSections.size === 0) {
+      toast.error(t('Selecciona al menos una sección para exportar', 'Select at least one section to export'))
+      return
+    }
+    
     setIsExportingPDF(true)
+    setDialogOpen(false)
     try {
-      const content = generateExportContent()
+      const content = generateExportContent(selectedSections)
       
       const htmlContent = `
 <!DOCTYPE html>
@@ -169,9 +226,15 @@ export function CampaignExport({ outputs, language }: CampaignExportProps) {
   }
 
   const exportToPowerPoint = async () => {
+    if (selectedSections.size === 0) {
+      toast.error(t('Selecciona al menos una sección para exportar', 'Select at least one section to export'))
+      return
+    }
+    
     setIsExportingPPTX(true)
+    setDialogOpen(false)
     try {
-      const content = generateExportContent()
+      const content = generateExportContent(selectedSections)
       
       const markdownContent = `# ${t('Campaña de Marketing', 'Marketing Campaign')}
 
@@ -205,13 +268,13 @@ ${t('Generado con Campaign Impact Hub', 'Generated with Campaign Impact Hub')}
     }
   }
 
-  const generateExportContent = (): string => {
+  const generateExportContent = (sectionsToInclude?: Set<keyof CampaignOutput>): string => {
     let content = ''
 
     content += `<h1>${t('Campaña de Marketing', 'Marketing Campaign')}</h1>\n`
     content += `<p class="meta">${t('Generado', 'Generated')}: ${new Date().toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>\n`
 
-    if (outputs.overview) {
+    if (outputs.overview && (!sectionsToInclude || sectionsToInclude.has('overview'))) {
       content += `<div class="section">\n`
       content += `<h2>${t('Overview Ejecutivo', 'Executive Overview')}</h2>\n`
       
@@ -266,14 +329,14 @@ ${t('Generado con Campaign Impact Hub', 'Generated with Campaign Impact Hub')}
       content += `</div>\n`
     }
 
-    if (outputs.strategy) {
+    if (outputs.strategy && (!sectionsToInclude || sectionsToInclude.has('strategy'))) {
       content += `<div class="section">\n`
       content += `<h2>${t('Estrategia de Campaña', 'Campaign Strategy')}</h2>\n`
       content += `<p>${outputs.strategy.replace(/\n/g, '<br>')}</p>\n`
       content += `</div>\n`
     }
 
-    if (Array.isArray(outputs.creativeRoutes) && outputs.creativeRoutes.length > 0) {
+    if (Array.isArray(outputs.creativeRoutes) && outputs.creativeRoutes.length > 0 && (!sectionsToInclude || sectionsToInclude.has('creativeRoutes'))) {
       content += `<div class="section">\n`
       content += `<h2>${t('Rutas Creativas', 'Creative Routes')}</h2>\n`
       
@@ -310,7 +373,7 @@ ${t('Generado con Campaign Impact Hub', 'Generated with Campaign Impact Hub')}
       content += `</div>\n`
     }
 
-    if (Array.isArray(outputs.funnelBlueprint) && outputs.funnelBlueprint.length > 0) {
+    if (Array.isArray(outputs.funnelBlueprint) && outputs.funnelBlueprint.length > 0 && (!sectionsToInclude || sectionsToInclude.has('funnelBlueprint'))) {
       content += `<div class="section">\n`
       content += `<h2>${t('Blueprint del Funnel', 'Funnel Blueprint')}</h2>\n`
       
@@ -337,7 +400,7 @@ ${t('Generado con Campaign Impact Hub', 'Generated with Campaign Impact Hub')}
       content += `</div>\n`
     }
 
-    if (typeof outputs.paidPack === 'object' && outputs.paidPack !== null) {
+    if (typeof outputs.paidPack === 'object' && outputs.paidPack !== null && (!sectionsToInclude || sectionsToInclude.has('paidPack'))) {
       content += `<div class="section">\n`
       content += `<h2>${t('Pack de Paid Media', 'Paid Media Pack')}</h2>\n`
       
@@ -364,7 +427,7 @@ ${t('Generado con Campaign Impact Hub', 'Generated with Campaign Impact Hub')}
       content += `</div>\n`
     }
 
-    if (Array.isArray(outputs.contentCalendar) && outputs.contentCalendar.length > 0) {
+    if (Array.isArray(outputs.contentCalendar) && outputs.contentCalendar.length > 0 && (!sectionsToInclude || sectionsToInclude.has('contentCalendar'))) {
       content += `<div class="section">\n`
       content += `<h2>${t('Calendario de Contenido', 'Content Calendar')}</h2>\n`
       content += `<table>\n`
@@ -398,39 +461,276 @@ ${t('Generado con Campaign Impact Hub', 'Generated with Campaign Impact Hub')}
     return content
   }
 
+  const exportToGoogleSlides = async () => {
+    if (selectedSections.size === 0) {
+      toast.error(t('Selecciona al menos una sección para exportar', 'Select at least one section to export'))
+      return
+    }
+    
+    setIsExportingSlides(true)
+    setDialogOpen(false)
+    try {
+      const content = generateExportContent(selectedSections)
+      
+      const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${t('Campaña de Marketing - Google Slides', 'Marketing Campaign - Google Slides')}</title>
+  <style>
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      line-height: 1.8;
+      color: #333;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 60px 40px;
+      background: #fff;
+    }
+    h1 {
+      font-size: 48px;
+      color: oklch(0.75 0.12 165);
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+    h2 {
+      font-size: 36px;
+      color: oklch(0.25 0.03 240);
+      margin-top: 60px;
+      margin-bottom: 24px;
+      font-weight: 600;
+      border-left: 6px solid oklch(0.85 0.15 50);
+      padding-left: 20px;
+    }
+    h3 {
+      font-size: 24px;
+      color: oklch(0.25 0.03 240);
+      margin-top: 36px;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+    p {
+      font-size: 18px;
+      margin-bottom: 16px;
+    }
+    ul, ol {
+      font-size: 18px;
+      margin-bottom: 20px;
+      padding-left: 32px;
+    }
+    li {
+      margin-bottom: 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 32px;
+      font-size: 16px;
+    }
+    th, td {
+      padding: 16px;
+      text-align: left;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    th {
+      background: oklch(0.75 0.12 165 / 0.15);
+      font-weight: 700;
+      color: oklch(0.25 0.03 240);
+    }
+    .meta {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 48px;
+    }
+    .section {
+      margin-bottom: 60px;
+      page-break-inside: avoid;
+    }
+  </style>
+</head>
+<body>
+  ${content}
+</body>
+</html>
+      `
+      
+      const blob = new Blob([htmlContent], { type: 'text/html' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `campaign-slides-${Date.now()}.html`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+      toast.success(t('Campaña exportada. Abre el HTML en Google Drive y selecciona "Abrir con Google Slides" o importa en tu editor de presentaciones.', 'Campaign exported. Open the HTML in Google Drive and select "Open with Google Slides" or import into your presentation editor.'))
+    } catch (error) {
+      console.error('Export error:', error)
+      toast.error(t('Error al exportar la campaña', 'Error exporting campaign'))
+    } finally {
+      setIsExportingSlides(false)
+    }
+  }
+
   const hasCampaignData = outputs.overview || outputs.strategy || outputs.creativeRoutes || outputs.funnelBlueprint
 
   return (
-    <div className="flex gap-3">
-      <Button
-        onClick={exportToPDF}
-        disabled={isExportingPDF || !hasCampaignData}
-        variant="outline"
-        size="sm"
-        className="gap-2"
-      >
-        {isExportingPDF ? (
-          <Spinner size={16} className="animate-spin" />
-        ) : (
-          <FilePdf size={16} weight="fill" />
-        )}
-        {t('Exportar a PDF', 'Export to PDF')}
-      </Button>
-
-      <Button
-        onClick={exportToPowerPoint}
-        disabled={isExportingPPTX || !hasCampaignData}
-        variant="outline"
-        size="sm"
-        className="gap-2"
-      >
-        {isExportingPPTX ? (
-          <Spinner size={16} className="animate-spin" />
-        ) : (
-          <FileDoc size={16} weight="fill" />
-        )}
-        {t('Exportar a PowerPoint', 'Export to PowerPoint')}
-      </Button>
-    </div>
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <DialogTrigger asChild>
+        <Button
+          disabled={!hasCampaignData}
+          variant="default"
+          size="sm"
+          className="gap-2"
+        >
+          <DownloadSimple size={16} weight="fill" />
+          {t('Exportar Campaña', 'Export Campaign')}
+        </Button>
+      </DialogTrigger>
+      
+      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold">
+            {t('Exportar Campaña', 'Export Campaign')}
+          </DialogTitle>
+          <DialogDescription>
+            {t('Selecciona las secciones que deseas incluir en la exportación', 'Select the sections you want to include in the export')}
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="flex-1 overflow-hidden flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              {selectedSections.size} {t('de', 'of')} {exportSections.filter(s => s.available).length} {t('secciones seleccionadas', 'sections selected')}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={selectAll}
+                className="text-xs"
+              >
+                {t('Seleccionar todo', 'Select all')}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={deselectAll}
+                className="text-xs"
+              >
+                {t('Deseleccionar todo', 'Deselect all')}
+              </Button>
+            </div>
+          </div>
+          
+          <Separator />
+          
+          <ScrollArea className="flex-1 pr-4">
+            <div className="space-y-3">
+              {exportSections.map((section) => (
+                <div
+                  key={section.id}
+                  className={`flex items-start space-x-3 p-3 rounded-lg border ${
+                    section.available 
+                      ? 'border-border hover:border-primary/50 cursor-pointer transition-colors' 
+                      : 'border-border/50 opacity-50 cursor-not-allowed'
+                  } ${selectedSections.has(section.id) ? 'bg-primary/5 border-primary' : ''}`}
+                  onClick={() => section.available && toggleSection(section.id)}
+                >
+                  <Checkbox
+                    id={section.id}
+                    checked={selectedSections.has(section.id)}
+                    disabled={!section.available}
+                    onCheckedChange={() => section.available && toggleSection(section.id)}
+                    className="mt-1"
+                  />
+                  <div className="flex-1">
+                    <Label
+                      htmlFor={section.id}
+                      className={`text-sm font-medium cursor-pointer ${
+                        section.available ? '' : 'cursor-not-allowed'
+                      }`}
+                    >
+                      {section.label}
+                    </Label>
+                    {!section.available && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {t('No disponible - genera esta sección primero', 'Not available - generate this section first')}
+                      </p>
+                    )}
+                  </div>
+                  {selectedSections.has(section.id) && (
+                    <CheckCircle size={20} weight="fill" className="text-primary" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+          
+          <Separator />
+          
+          <div className="space-y-3">
+            <div className="text-sm font-semibold">
+              {t('Formato de exportación', 'Export format')}
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <Button
+                onClick={exportToGoogleSlides}
+                disabled={isExportingSlides || selectedSections.size === 0}
+                variant="outline"
+                className="gap-2 h-auto py-3 flex-col"
+              >
+                {isExportingSlides ? (
+                  <Spinner size={24} className="animate-spin" />
+                ) : (
+                  <GoogleLogo size={24} weight="fill" />
+                )}
+                <span className="text-xs font-medium">
+                  {t('Google Slides', 'Google Slides')}
+                </span>
+              </Button>
+              
+              <Button
+                onClick={exportToPowerPoint}
+                disabled={isExportingPPTX || selectedSections.size === 0}
+                variant="outline"
+                className="gap-2 h-auto py-3 flex-col"
+              >
+                {isExportingPPTX ? (
+                  <Spinner size={24} className="animate-spin" />
+                ) : (
+                  <MicrosoftPowerpointLogo size={24} weight="fill" />
+                )}
+                <span className="text-xs font-medium">
+                  {t('PowerPoint', 'PowerPoint')}
+                </span>
+              </Button>
+              
+              <Button
+                onClick={exportToPDF}
+                disabled={isExportingPDF || selectedSections.size === 0}
+                variant="outline"
+                className="gap-2 h-auto py-3 flex-col"
+              >
+                {isExportingPDF ? (
+                  <Spinner size={24} className="animate-spin" />
+                ) : (
+                  <FilePdf size={24} weight="fill" />
+                )}
+                <span className="text-xs font-medium">
+                  {t('PDF/HTML', 'PDF/HTML')}
+                </span>
+              </Button>
+            </div>
+            
+            <p className="text-xs text-muted-foreground">
+              {t('Los archivos se descargarán en formato HTML optimizado para cada plataforma. Puedes abrirlos directamente o importarlos a tu herramienta preferida.', 'Files will be downloaded in HTML format optimized for each platform. You can open them directly or import them into your preferred tool.')}
+            </p>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
