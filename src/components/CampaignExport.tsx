@@ -10,8 +10,6 @@ import {
   FilePdf, 
   FileDoc,
   Spinner,
-  GoogleLogo,
-  MicrosoftPowerpointLogo,
   CheckCircle
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
@@ -88,112 +86,363 @@ export function CampaignExport({ outputs, language }: CampaignExportProps) {
 <head>
   <meta charset="UTF-8">
   <title>${t('Campaña de Marketing', 'Marketing Campaign')}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       line-height: 1.6;
-      color: #333;
-      max-width: 800px;
+      color: #1a1a1a;
+      max-width: 210mm;
       margin: 0 auto;
-      padding: 40px 20px;
+      padding: 20mm;
+      background: #ffffff;
     }
     h1 {
       font-family: 'Space Grotesk', sans-serif;
-      color: oklch(0.75 0.12 165);
-      font-size: 32px;
+      color: #5eb3a1;
+      font-size: 36px;
+      font-weight: 700;
       margin-bottom: 8px;
-      border-bottom: 3px solid oklch(0.75 0.12 165);
-      padding-bottom: 12px;
+      border-bottom: 4px solid #5eb3a1;
+      padding-bottom: 16px;
+      page-break-after: avoid;
     }
     h2 {
       font-family: 'Space Grotesk', sans-serif;
-      color: oklch(0.25 0.03 240);
-      font-size: 24px;
-      margin-top: 32px;
-      margin-bottom: 16px;
-      border-left: 4px solid oklch(0.85 0.15 50);
-      padding-left: 12px;
+      color: #2a2a3e;
+      font-size: 26px;
+      font-weight: 600;
+      margin-top: 40px;
+      margin-bottom: 20px;
+      border-left: 6px solid #f5a962;
+      padding-left: 16px;
+      page-break-after: avoid;
     }
     h3 {
       font-family: 'Space Grotesk', sans-serif;
-      color: oklch(0.25 0.03 240);
-      font-size: 18px;
-      margin-top: 24px;
-      margin-bottom: 12px;
+      color: #2a2a3e;
+      font-size: 20px;
+      font-weight: 600;
+      margin-top: 28px;
+      margin-bottom: 14px;
+      page-break-after: avoid;
     }
     p {
-      margin-bottom: 12px;
+      margin-bottom: 14px;
+      font-size: 14px;
+      line-height: 1.7;
     }
     ul, ol {
-      margin-bottom: 16px;
-      padding-left: 24px;
+      margin-bottom: 18px;
+      padding-left: 28px;
+      font-size: 14px;
     }
     li {
-      margin-bottom: 8px;
+      margin-bottom: 10px;
+      line-height: 1.6;
     }
     .meta {
       color: #666;
-      font-size: 14px;
-      margin-bottom: 32px;
+      font-size: 13px;
+      margin-bottom: 40px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0e0e0;
     }
     .section {
-      margin-bottom: 40px;
+      margin-bottom: 48px;
       page-break-inside: avoid;
     }
     .badge {
       display: inline-block;
-      padding: 4px 12px;
-      border-radius: 12px;
+      padding: 6px 14px;
+      border-radius: 6px;
       font-size: 12px;
       font-weight: 600;
       margin-right: 8px;
       margin-bottom: 8px;
     }
     .badge-primary {
-      background: oklch(0.75 0.12 165 / 0.15);
-      color: oklch(0.75 0.12 165);
+      background: #e8f5f2;
+      color: #5eb3a1;
+      border: 1px solid #5eb3a1;
     }
     .badge-secondary {
-      background: oklch(0.88 0.08 340 / 0.15);
-      color: oklch(0.88 0.08 340);
+      background: #f9eef6;
+      color: #d97ab8;
+      border: 1px solid #d97ab8;
     }
     .badge-accent {
-      background: oklch(0.85 0.15 50 / 0.15);
-      color: oklch(0.85 0.15 50);
+      background: #fef3e8;
+      color: #f5a962;
+      border: 1px solid #f5a962;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 24px;
+      margin-bottom: 28px;
+      font-size: 13px;
+      page-break-inside: avoid;
     }
     th, td {
-      padding: 12px;
+      padding: 14px;
       text-align: left;
-      border-bottom: 1px solid #e0e0e0;
+      border: 1px solid #d0d0d0;
     }
     th {
-      background: oklch(0.75 0.12 165 / 0.1);
+      background: #e8f5f2;
       font-weight: 600;
-      color: oklch(0.25 0.03 240);
+      color: #2a2a3e;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    tr:nth-child(even) {
+      background: #fafafa;
+    }
+    strong {
+      color: #2a2a3e;
+      font-weight: 600;
     }
     .footer {
-      margin-top: 60px;
-      padding-top: 20px;
+      margin-top: 80px;
+      padding-top: 24px;
       border-top: 2px solid #e0e0e0;
       text-align: center;
       font-size: 12px;
       color: #999;
+      page-break-inside: avoid;
+    }
+    .chart-container {
+      margin: 28px 0;
+      padding: 24px;
+      background: #fafafa;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      page-break-inside: avoid;
     }
     @media print {
       body {
-        padding: 20px;
+        padding: 15mm;
+        max-width: 100%;
       }
       .section {
         page-break-inside: avoid;
       }
-      h1, h2 {
+      h1, h2, h3 {
         page-break-after: avoid;
       }
+      table {
+        page-break-inside: avoid;
+      }
+      .chart-container {
+        page-break-inside: avoid;
+      }
+    }
+    @page {
+      margin: 20mm;
+      size: A4;
+    }
+  </style>
+</head>
+<body>
+  ${content}
+  <div class="footer">
+    <p>${t('Generado con Campaign Impact Hub', 'Generated with Campaign Impact Hub')} • ${new Date().toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+  </div>
+  <script>
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        window.print();
+      }, 500);
+    });
+  </script>
+</body>
+</html>
+      `
+      
+      const printWindow = window.open('', '_blank')
+      if (printWindow) {
+        printWindow.document.write(htmlContent)
+        printWindow.document.close()
+        toast.success(t('Abriendo vista previa de PDF. Usa "Guardar como PDF" en el diálogo de impresión.', 'Opening PDF preview. Use "Save as PDF" in the print dialog.'))
+      } else {
+        const blob = new Blob([htmlContent], { type: 'text/html' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `campaign-${Date.now()}.html`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+        toast.success(t('HTML descargado. Ábrelo y usa Ctrl+P para guardar como PDF.', 'HTML downloaded. Open it and use Ctrl+P to save as PDF.'))
+      }
+    } catch (error) {
+      console.error('Export error:', error)
+      toast.error(t('Error al exportar la campaña', 'Error exporting campaign'))
+    } finally {
+      setIsExportingPDF(false)
+    }
+  }
+
+  const exportToWord = async () => {
+    if (selectedSections.size === 0) {
+      toast.error(t('Selecciona al menos una sección para exportar', 'Select at least one section to export'))
+      return
+    }
+    
+    setIsExportingPPTX(true)
+    setDialogOpen(false)
+    try {
+      const content = generateExportContent(selectedSections)
+      
+      const wordHtml = `
+<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+  <meta charset="UTF-8">
+  <meta name="ProgId" content="Word.Document">
+  <meta name="Generator" content="Microsoft Word">
+  <meta name="Originator" content="Microsoft Word">
+  <title>${t('Campaña de Marketing', 'Marketing Campaign')}</title>
+  <style>
+    @page {
+      size: 8.5in 11in;
+      margin: 1in 1in 1in 1in;
+      mso-header-margin: 0.5in;
+      mso-footer-margin: 0.5in;
+      mso-paper-source: 0;
+    }
+    body {
+      font-family: 'Calibri', 'Arial', sans-serif;
+      font-size: 11pt;
+      line-height: 1.5;
+      color: #000000;
+    }
+    h1 {
+      font-family: 'Calibri', sans-serif;
+      font-size: 28pt;
+      font-weight: bold;
+      color: #5eb3a1;
+      margin-top: 0pt;
+      margin-bottom: 12pt;
+      border-bottom: 3pt solid #5eb3a1;
+      padding-bottom: 6pt;
+      page-break-after: avoid;
+    }
+    h2 {
+      font-family: 'Calibri', sans-serif;
+      font-size: 20pt;
+      font-weight: bold;
+      color: #2a2a3e;
+      margin-top: 24pt;
+      margin-bottom: 12pt;
+      border-left: 4pt solid #f5a962;
+      padding-left: 12pt;
+      page-break-after: avoid;
+    }
+    h3 {
+      font-family: 'Calibri', sans-serif;
+      font-size: 16pt;
+      font-weight: bold;
+      color: #2a2a3e;
+      margin-top: 18pt;
+      margin-bottom: 8pt;
+      page-break-after: avoid;
+    }
+    p {
+      margin-top: 0pt;
+      margin-bottom: 10pt;
+      font-size: 11pt;
+      line-height: 1.5;
+    }
+    ul, ol {
+      margin-top: 0pt;
+      margin-bottom: 10pt;
+      padding-left: 24pt;
+    }
+    li {
+      margin-bottom: 6pt;
+      font-size: 11pt;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 16pt;
+      font-size: 10pt;
+    }
+    th, td {
+      border: 1pt solid #d0d0d0;
+      padding: 8pt;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background-color: #e8f5f2;
+      font-weight: bold;
+      color: #2a2a3e;
+    }
+    tr:nth-child(even) {
+      background-color: #fafafa;
+    }
+    strong {
+      font-weight: bold;
+      color: #2a2a3e;
+    }
+    .meta {
+      font-size: 10pt;
+      color: #666666;
+      margin-bottom: 24pt;
+      padding-bottom: 12pt;
+      border-bottom: 1pt solid #e0e0e0;
+    }
+    .section {
+      margin-bottom: 32pt;
+      page-break-inside: avoid;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4pt 10pt;
+      border-radius: 4pt;
+      font-size: 9pt;
+      font-weight: bold;
+      margin-right: 6pt;
+      margin-bottom: 6pt;
+    }
+    .badge-primary {
+      background-color: #e8f5f2;
+      color: #5eb3a1;
+      border: 1pt solid #5eb3a1;
+    }
+    .badge-secondary {
+      background-color: #f9eef6;
+      color: #d97ab8;
+      border: 1pt solid #d97ab8;
+    }
+    .badge-accent {
+      background-color: #fef3e8;
+      color: #f5a962;
+      border: 1pt solid #f5a962;
+    }
+    .chart-container {
+      margin: 16pt 0;
+      padding: 16pt;
+      background-color: #fafafa;
+      border: 1pt solid #e0e0e0;
+      page-break-inside: avoid;
+    }
+    .footer {
+      margin-top: 48pt;
+      padding-top: 16pt;
+      border-top: 2pt solid #e0e0e0;
+      text-align: center;
+      font-size: 9pt;
+      color: #999999;
     }
   </style>
 </head>
@@ -206,60 +455,17 @@ export function CampaignExport({ outputs, language }: CampaignExportProps) {
 </html>
       `
       
-      const blob = new Blob([htmlContent], { type: 'text/html' })
+      const blob = new Blob(['\ufeff', wordHtml], { type: 'application/msword' })
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `campaign-${Date.now()}.html`
+      link.download = `campaign-${Date.now()}.doc`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
 
-      toast.success(t('Campaña exportada correctamente', 'Campaign exported successfully'))
-    } catch (error) {
-      console.error('Export error:', error)
-      toast.error(t('Error al exportar la campaña', 'Error exporting campaign'))
-    } finally {
-      setIsExportingPDF(false)
-    }
-  }
-
-  const exportToPowerPoint = async () => {
-    if (selectedSections.size === 0) {
-      toast.error(t('Selecciona al menos una sección para exportar', 'Select at least one section to export'))
-      return
-    }
-    
-    setIsExportingPPTX(true)
-    setDialogOpen(false)
-    try {
-      const content = generateExportContent(selectedSections)
-      
-      const markdownContent = `# ${t('Campaña de Marketing', 'Marketing Campaign')}
-
-${t('Generado', 'Generated')}: ${new Date().toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-
----
-
-${content}
-
----
-
-${t('Generado con Campaign Impact Hub', 'Generated with Campaign Impact Hub')}
-`
-      
-      const blob = new Blob([markdownContent], { type: 'text/markdown' })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `campaign-${Date.now()}.md`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-
-      toast.success(t('Campaña exportada correctamente. Importa el archivo .md en PowerPoint usando un convertidor.', 'Campaign exported successfully. Import the .md file into PowerPoint using a converter.'))
+      toast.success(t('Documento Word descargado correctamente. Puedes abrirlo con Microsoft Word o Google Docs.', 'Word document downloaded successfully. You can open it with Microsoft Word or Google Docs.'))
     } catch (error) {
       console.error('Export error:', error)
       toast.error(t('Error al exportar la campaña', 'Error exporting campaign'))
@@ -657,7 +863,7 @@ ${t('Generado con Campaign Impact Hub', 'Generated with Campaign Impact Hub')}
     return content
   }
 
-  const exportToGoogleSlides = async () => {
+  const exportToHTML = async () => {
     if (selectedSections.size === 0) {
       toast.error(t('Selecciona al menos una sección para exportar', 'Select at least one section to export'))
       return
@@ -673,47 +879,68 @@ ${t('Generado con Campaign Impact Hub', 'Generated with Campaign Impact Hub')}
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>${t('Campaña de Marketing - Google Slides', 'Marketing Campaign - Google Slides')}</title>
+  <title>${t('Campaña de Marketing', 'Marketing Campaign')}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
     body {
       font-family: 'Inter', Arial, sans-serif;
       line-height: 1.8;
-      color: #333;
-      max-width: 960px;
+      color: #1a1a1a;
+      max-width: 1200px;
       margin: 0 auto;
       padding: 60px 40px;
-      background: #fff;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+    .container {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 60px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.1);
     }
     h1 {
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 48px;
-      color: oklch(0.75 0.12 165);
+      color: #5eb3a1;
       margin-bottom: 12px;
       font-weight: 700;
+      border-bottom: 4px solid #5eb3a1;
+      padding-bottom: 16px;
     }
     h2 {
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 36px;
-      color: oklch(0.25 0.03 240);
+      color: #2a2a3e;
       margin-top: 60px;
       margin-bottom: 24px;
       font-weight: 600;
-      border-left: 6px solid oklch(0.85 0.15 50);
+      border-left: 6px solid #f5a962;
       padding-left: 20px;
     }
     h3 {
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 24px;
-      color: oklch(0.25 0.03 240);
+      color: #2a2a3e;
       margin-top: 36px;
       margin-bottom: 16px;
       font-weight: 600;
     }
     p {
-      font-size: 18px;
+      font-size: 16px;
       margin-bottom: 16px;
+      line-height: 1.7;
     }
     ul, ol {
-      font-size: 18px;
+      font-size: 16px;
       margin-bottom: 20px;
       padding-left: 32px;
+      line-height: 1.7;
     }
     li {
       margin-bottom: 12px;
@@ -722,31 +949,93 @@ ${t('Generado con Campaign Impact Hub', 'Generated with Campaign Impact Hub')}
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 32px;
-      font-size: 16px;
+      font-size: 14px;
     }
     th, td {
+      border: 1px solid #d0d0d0;
       padding: 16px;
       text-align: left;
-      border-bottom: 2px solid #e0e0e0;
+      vertical-align: top;
     }
     th {
-      background: oklch(0.75 0.12 165 / 0.15);
+      background: #e8f5f2;
       font-weight: 700;
-      color: oklch(0.25 0.03 240);
+      color: #2a2a3e;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    tr:nth-child(even) {
+      background: #fafafa;
+    }
+    strong {
+      color: #2a2a3e;
+      font-weight: 600;
     }
     .meta {
-      font-size: 16px;
+      font-size: 14px;
       color: #666;
       margin-bottom: 48px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #e0e0e0;
     }
     .section {
       margin-bottom: 60px;
-      page-break-inside: avoid;
+    }
+    .badge {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+    .badge-primary {
+      background: #e8f5f2;
+      color: #5eb3a1;
+      border: 1px solid #5eb3a1;
+    }
+    .badge-secondary {
+      background: #f9eef6;
+      color: #d97ab8;
+      border: 1px solid #d97ab8;
+    }
+    .badge-accent {
+      background: #fef3e8;
+      color: #f5a962;
+      border: 1px solid #f5a962;
+    }
+    .chart-container {
+      margin: 28px 0;
+      padding: 24px;
+      background: #fafafa;
+      border-radius: 12px;
+      border: 1px solid #e0e0e0;
+    }
+    .footer {
+      margin-top: 80px;
+      padding-top: 24px;
+      border-top: 2px solid #e0e0e0;
+      text-align: center;
+      font-size: 13px;
+      color: #999;
+    }
+    @media print {
+      body {
+        background: #fff;
+      }
+      .container {
+        box-shadow: none;
+      }
     }
   </style>
 </head>
 <body>
-  ${content}
+  <div class="container">
+    ${content}
+    <div class="footer">
+      <p>${t('Generado con Campaign Impact Hub', 'Generated with Campaign Impact Hub')} • ${new Date().toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+    </div>
+  </div>
 </body>
 </html>
       `
@@ -755,13 +1044,13 @@ ${t('Generado con Campaign Impact Hub', 'Generated with Campaign Impact Hub')}
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `campaign-slides-${Date.now()}.html`
+      link.download = `campaign-${Date.now()}.html`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
 
-      toast.success(t('Campaña exportada. Abre el HTML en Google Drive y selecciona "Abrir con Google Slides" o importa en tu editor de presentaciones.', 'Campaign exported. Open the HTML in Google Drive and select "Open with Google Slides" or import into your presentation editor.'))
+      toast.success(t('Campaña exportada en HTML. Abre el archivo para visualizarlo en tu navegador.', 'Campaign exported in HTML. Open the file to view it in your browser.'))
     } catch (error) {
       console.error('Export error:', error)
       toast.error(t('Error al exportar la campaña', 'Error exporting campaign'))
@@ -873,7 +1162,7 @@ ${t('Generado con Campaign Impact Hub', 'Generated with Campaign Impact Hub')}
             </div>
             <div className="grid grid-cols-3 gap-3">
               <Button
-                onClick={exportToGoogleSlides}
+                onClick={exportToHTML}
                 disabled={isExportingSlides || selectedSections.size === 0}
                 variant="outline"
                 className="gap-2 h-auto py-3 flex-col"
@@ -881,15 +1170,15 @@ ${t('Generado con Campaign Impact Hub', 'Generated with Campaign Impact Hub')}
                 {isExportingSlides ? (
                   <Spinner size={24} className="animate-spin" />
                 ) : (
-                  <GoogleLogo size={24} weight="fill" />
+                  <DownloadSimple size={24} weight="fill" />
                 )}
                 <span className="text-xs font-medium">
-                  {t('Google Slides', 'Google Slides')}
+                  HTML
                 </span>
               </Button>
               
               <Button
-                onClick={exportToPowerPoint}
+                onClick={exportToWord}
                 disabled={isExportingPPTX || selectedSections.size === 0}
                 variant="outline"
                 className="gap-2 h-auto py-3 flex-col"
@@ -897,10 +1186,10 @@ ${t('Generado con Campaign Impact Hub', 'Generated with Campaign Impact Hub')}
                 {isExportingPPTX ? (
                   <Spinner size={24} className="animate-spin" />
                 ) : (
-                  <MicrosoftPowerpointLogo size={24} weight="fill" />
+                  <FileDoc size={24} weight="fill" />
                 )}
                 <span className="text-xs font-medium">
-                  {t('PowerPoint', 'PowerPoint')}
+                  {t('Word', 'Word')}
                 </span>
               </Button>
               
