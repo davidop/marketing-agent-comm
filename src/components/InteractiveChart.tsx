@@ -1,17 +1,14 @@
 import React, { useState, useMemo } from 'react'
-import { Badge } from '@/components/ui/badge'
-import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
-import { BarChart, Bar, LineChart, Line, XAxis, YAx
 import { toast } from 'sonner'
 interface ChartDataPoint {
-  category?: string
+import { toast } from 'sonner'
 
   data: ChartDataPoint[]
   type?: 'bar' | 'line'
+  data: ChartDataPoint[]
+  type?: 'bar' | 'line'
 
-  enableFilter?: boolean
-  yAxisKeys?: string[]
 }
 c
 
