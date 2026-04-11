@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CampaignOverview } from '@/components/CampaignOverview'
+import { CampaignExport } from '@/components/CampaignExport'
 import { OutputCard } from '@/components/OutputCard'
 import { CreativeRoutesDisplay } from '@/components/CreativeRoutesDisplay'
 import FlowsDisplay from '@/components/FlowsDisplay'
@@ -43,11 +44,12 @@ export function CampaignDashboard({
   onRegenerateBlock
 }: CampaignDashboardProps) {
   const [activeTab, setActiveTab] = useState('overview')
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
 
   const t = (es: string, en: string) => language === 'es' ? es : en
 
   const handleExport = () => {
-    console.log('Exporting campaign outputs...')
+    setIsExportDialogOpen(true)
   }
 
   const handleSaveVersion = (blockName: string, content: string) => {
@@ -69,6 +71,13 @@ export function CampaignDashboard({
           {t('Exportar', 'Export')}
         </Button>
       </div>
+
+      <CampaignExport
+        outputs={outputs}
+        language={language}
+        open={isExportDialogOpen}
+        onOpenChange={setIsExportDialogOpen}
+      />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="glass-panel grid w-full grid-cols-6 gap-1 p-1 border-2">

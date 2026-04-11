@@ -7,10 +7,12 @@ import { Separator } from '@/components/ui/separator'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { FileText, FilePdf, FileHtml, Spinner } from '@phosphor-icons/react'
 import { toast } from 'sonner'
-import type { CampaignOutput } from '@/lib/types'
+import { exportCampaignToPDF } from '@/lib/pdfExport'
+import type { CampaignOutput, CampaignBriefData } from '@/lib/types'
 
 interface CampaignExportProps {
   outputs: Partial<CampaignOutput>
+  brief?: CampaignBriefData | null
   language: 'es' | 'en'
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -130,37 +132,19 @@ export function CampaignExport({ outputs, language, open, onOpenChange }: Campai
     }
     setIsExportingPDF(true)
     try {
-      const content = buildContent()
-      const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head>
-  <title>${t('Campaña de Marketing', 'Marketing Campaign')}</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; padding: 20mm; }
-    h1 { font-size: 36px; margin-bottom: 24px; border-bottom: 3px solid #5eb3a1; padding-bottom: 16px; }
-    h2 { font-size: 28px; margin-top: 40px; margin-bottom: 16px; color: #2a2a3e; border-left: 6px solid #5eb3a1; padding-left: 16px; }
-    h3 { font-size: 20px; margin-top: 24px; margin-bottom: 14px; }
-    p { margin-bottom: 16px; }
-    ul { padding-left: 28px; margin-bottom: 16px; }
-    .section { margin-bottom: 40px; border-bottom: 1px solid #e0e0e0; padding-bottom: 32px; }
-  </style>
-</head>
-<body>
-  ${content}
-</body>
-</html>
-      `
-      const printWindow = window.open('', '_blank')
-      if (printWindow) {
-        printWindow.document.write(htmlContent)
-        printWindow.document.close()
-        printWindow.onload = () => {
-          printWindow.print()
+      const filteredOutputs: Partial<CampaignOutput> = {}
+      selectedSections.forEach(section => {
+        if (outputs[section]) {
+          (filteredOutputs as any)[section] = outputs[section]
         }
-      }
-      toast.success(t('Exportación iniciada', 'Export started'))
+      })
+      
+      exportCampaignToPDF({
+        outputs: filteredOutputs,
+        language
+      })
+      
+      toast.success(t('PDF exportado exitosamente', 'PDF exported successfully'))
     } catch (error) {
       console.error('Export error:', error)
       toast.error(t('Error al exportar', 'Export error'))
