@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
+import { Button } from '@/components/ui/button'
 import { 
   Shield, 
   Lightning, 
@@ -10,8 +11,11 @@ import {
   Sparkle,
   ChartBar,
   Target,
-  Warning
+  Warning,
+  Download
 } from '@phosphor-icons/react'
+import { exportSection } from '@/lib/sectionExport'
+import { toast } from 'sonner'
 
 export interface CreativeRoute {
   type: 'safe' | 'bold' | 'premium'
@@ -117,8 +121,54 @@ export function CreativeRoutesDisplay({ routes, language, isLoading = false }: C
     )
   }
 
+  const handleExport = (format: 'pdf' | 'html' | 'word' | 'json' | 'text') => {
+    try {
+      exportSection({
+        sectionName: t('Rutas Creativas', 'Creative Routes'),
+        sectionData: routes,
+        language,
+        format
+      })
+      toast.success(t('Sección exportada exitosamente', 'Section exported successfully'))
+    } catch (error) {
+      console.error('Export error:', error)
+      toast.error(t('Error al exportar', 'Export error'))
+    }
+  }
+
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Sparkle size={24} weight="fill" className="text-primary" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold">{t('Rutas Creativas', 'Creative Routes')}</h2>
+            <p className="text-sm text-muted-foreground">
+              {t('3 enfoques estratégicos para tu campaña', '3 strategic approaches for your campaign')}
+            </p>
+          </div>
+        </div>
+        
+        {routes && routes.length > 0 && (
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => handleExport('pdf')} className="h-9 px-3">
+              <Download size={16} className="mr-2" />
+              PDF
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => handleExport('html')} className="h-9 px-3">
+              <Download size={16} className="mr-2" />
+              HTML
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => handleExport('json')} className="h-9 px-3">
+              <Download size={16} className="mr-2" />
+              JSON
+            </Button>
+          </div>
+        )}
+      </div>
+
       <Tabs defaultValue="safe" className="w-full">
         <TabsList className="glass-panel mb-6 border-2 rounded-xl p-1 w-full grid grid-cols-3">
           <TabsTrigger value="safe" className="text-sm font-bold rounded-lg px-4 py-2 data-[state=active]:neon-glow">

@@ -2,7 +2,10 @@ import React from 'react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Funnel, Target, Lightbulb, ShoppingCart, Heart, TrendUp } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
+import { Funnel, Target, Lightbulb, ShoppingCart, Heart, TrendUp, Download } from '@phosphor-icons/react'
+import { exportSection } from '@/lib/sectionExport'
+import { toast } from 'sonner'
 import type { Language } from '@/lib/i18n'
 
 export interface FunnelPhase {
@@ -258,17 +261,49 @@ export default function FunnelBlueprint({ phases, language = 'es' }: FunnelBluep
 
   const t = labels[language]
 
+  const handleExport = (format: 'pdf' | 'html' | 'word' | 'json' | 'text') => {
+    try {
+      exportSection({
+        sectionName: t.title,
+        sectionData: finalPhases,
+        language,
+        format
+      })
+      toast.success(language === 'es' ? 'Sección exportada exitosamente' : 'Section exported successfully')
+    } catch (error) {
+      console.error('Export error:', error)
+      toast.error(language === 'es' ? 'Error al exportar' : 'Export error')
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-primary/10">
-          <Funnel size={28} weight="fill" className="text-primary" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Funnel size={28} weight="fill" className="text-primary" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold">{t.title}</h2>
+            <p className="text-sm text-muted-foreground">
+              {language === 'es' ? '4 fases estratégicas del customer journey' : '4 strategic phases of the customer journey'}
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-2xl font-bold">{t.title}</h2>
-          <p className="text-sm text-muted-foreground">
-            {language === 'es' ? '4 fases estratégicas del customer journey' : '4 strategic phases of the customer journey'}
-          </p>
+
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => handleExport('pdf')} className="h-9 px-3">
+            <Download size={16} className="mr-2" />
+            PDF
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => handleExport('html')} className="h-9 px-3">
+            <Download size={16} className="mr-2" />
+            HTML
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => handleExport('json')} className="h-9 px-3">
+            <Download size={16} className="mr-2" />
+            JSON
+          </Button>
         </div>
       </div>
 

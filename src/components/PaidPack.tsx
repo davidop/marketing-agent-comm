@@ -26,7 +26,9 @@ import {
   TrendUp,
   CheckCircle,
   WarningCircle,
+  Download,
 } from '@phosphor-icons/react'
+import { exportSection } from '@/lib/sectionExport'
 
 interface CampaignStructure {
   objective: string
@@ -107,6 +109,22 @@ export function PaidPack({ data, isLoading, language, onRegenerate }: PaidPackPr
     const text = JSON.stringify(data, null, 2)
     navigator.clipboard.writeText(text)
     toast.success(language === 'es' ? 'Copiado al portapapeles' : 'Copied to clipboard')
+  }
+
+  const handleExport = (format: 'pdf' | 'html' | 'word' | 'json' | 'text') => {
+    if (!data) return
+    try {
+      exportSection({
+        sectionName: language === 'es' ? 'Paid Pack' : 'Paid Pack',
+        sectionData: data,
+        language,
+        format
+      })
+      toast.success(language === 'es' ? 'Sección exportada exitosamente' : 'Section exported successfully')
+    } catch (error) {
+      console.error('Export error:', error)
+      toast.error(language === 'es' ? 'Error al exportar' : 'Export error')
+    }
   }
 
   const getAngleColor = (angle: string) => {
@@ -207,6 +225,18 @@ export function PaidPack({ data, isLoading, language, onRegenerate }: PaidPackPr
         </div>
 
         <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => handleExport('pdf')} className="h-9 px-3">
+            <Download size={16} className="mr-2" />
+            PDF
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => handleExport('html')} className="h-9 px-3">
+            <Download size={16} className="mr-2" />
+            HTML
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => handleExport('json')} className="h-9 px-3">
+            <Download size={16} className="mr-2" />
+            JSON
+          </Button>
           <Button size="sm" variant="ghost" onClick={handleCopy} className="h-9 px-3">
             <Copy size={18} className="mr-2" />
             {language === 'es' ? 'Copiar' : 'Copy'}
