@@ -1,7 +1,10 @@
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { toast } from 'sonner'
 import { 
   Target, 
   Users, 
@@ -10,8 +13,14 @@ import {
   CheckCircle, 
   Rocket,
   Warning,
-  TrendUp
+  TrendUp,
+  Download,
+  FilePdf,
+  FileHtml,
+  FileText,
+  FileCode
 } from '@phosphor-icons/react'
+import { exportSection } from '@/lib/sectionExport'
 
 interface CampaignOverviewProps {
   data: {
@@ -34,6 +43,29 @@ interface CampaignOverviewProps {
 export function CampaignOverview({ data, language }: CampaignOverviewProps) {
   const t = (es: string, en: string) => language === 'es' ? es : en
 
+  const handleExport = (format: 'pdf' | 'html' | 'word' | 'json') => {
+    try {
+      exportSection({
+        sectionName: t('Overview Estratégico', 'Strategic Overview'),
+        sectionData: data,
+        language,
+        format
+      })
+      toast.success(
+        language === 'es'
+          ? `Exportado como ${format.toUpperCase()}`
+          : `Exported as ${format.toUpperCase()}`
+      )
+    } catch (error) {
+      console.error('Export error:', error)
+      toast.error(
+        language === 'es'
+          ? 'Error al exportar'
+          : 'Export error'
+      )
+    }
+  }
+
   const {
     objective = t('Por definir', 'TBD'),
     kpi = t('Por definir', 'TBD'),
@@ -48,6 +80,35 @@ export function CampaignOverview({ data, language }: CampaignOverviewProps) {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-bold">{t('Overview Estratégico', 'Strategic Overview')}</h2>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" variant="outline">
+              <Download size={16} className="mr-2" />
+              {t('Exportar', 'Export')}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem onClick={() => handleExport('pdf')}>
+              <FilePdf size={16} className="mr-2" />
+              PDF
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleExport('html')}>
+              <FileHtml size={16} className="mr-2" />
+              HTML
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleExport('word')}>
+              <FileText size={16} className="mr-2" />
+              Word
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleExport('json')}>
+              <FileCode size={16} className="mr-2" />
+              JSON
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="glass-panel p-5 border-2 space-y-3">
           <div className="flex items-start gap-3">

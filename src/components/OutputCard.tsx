@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { toast } from 'sonner'
 import { 
   Copy, 
@@ -11,8 +12,14 @@ import {
   PencilSimple, 
   FloppyDisk,
   Check,
-  X
+  X,
+  Download,
+  FilePdf,
+  FileHtml,
+  FileText,
+  FileCode
 } from '@phosphor-icons/react'
+import { exportSection } from '@/lib/sectionExport'
 
 interface OutputCardProps {
   title: string
@@ -65,6 +72,29 @@ export function OutputCard({
         language === 'es' 
           ? 'Versión guardada correctamente' 
           : 'Version saved successfully'
+      )
+    }
+  }
+
+  const handleExport = (format: 'pdf' | 'html' | 'word' | 'json' | 'text') => {
+    try {
+      exportSection({
+        sectionName: title,
+        sectionData: content,
+        language,
+        format
+      })
+      toast.success(
+        language === 'es'
+          ? `Exportado como ${format.toUpperCase()}`
+          : `Exported as ${format.toUpperCase()}`
+      )
+    } catch (error) {
+      console.error('Export error:', error)
+      toast.error(
+        language === 'es'
+          ? 'Error al exportar'
+          : 'Export error'
       )
     }
   }
@@ -166,15 +196,40 @@ export function OutputCard({
                 <ArrowsClockwise size={16} className="mr-1" />
                 {language === 'es' ? 'Regenerar' : 'Regenerate'}
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleSaveAsVersion}
-                className="h-8 px-3"
-              >
-                <FloppyDisk size={16} className="mr-1" />
-                {language === 'es' ? 'Guardar versión' : 'Save version'}
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-3"
+                  >
+                    <Download size={16} className="mr-1" />
+                    {language === 'es' ? 'Exportar' : 'Export'}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuItem onClick={() => handleExport('pdf')}>
+                    <FilePdf size={16} className="mr-2" />
+                    PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('html')}>
+                    <FileHtml size={16} className="mr-2" />
+                    HTML
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('word')}>
+                    <FileText size={16} className="mr-2" />
+                    Word
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('json')}>
+                    <FileCode size={16} className="mr-2" />
+                    JSON
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('text')}>
+                    <FileText size={16} className="mr-2" />
+                    {language === 'es' ? 'Texto' : 'Text'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           )}
         </div>
